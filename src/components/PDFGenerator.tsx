@@ -64,15 +64,21 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
       pdf.setFontSize(18);
       pdf.text(branding.studioName, pageWidth / 2, 18, { align: 'center' });
 
-      // Título do treino centralizado
-      yPosition = 50;
+      // Título FICHA DE TREINO centralizado
+      yPosition = 45;
       pdf.setTextColor(0, 0, 0);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(18);
+      pdf.text('FICHA DE TREINO', pageWidth / 2, yPosition, { align: 'center' });
+
+      // Título do treino centralizado
+      yPosition = 65;
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(20);
       pdf.text(`TREINO ${category}`, pageWidth / 2, yPosition, { align: 'center' });
 
       // Preparar tabela
-      yPosition = 70;
+      yPosition = 85;
       const tableStartX = 15;
       const tableWidth = pageWidth - 30;
       const colWidths = [tableWidth * 0.5, tableWidth * 0.3, tableWidth * 0.1, tableWidth * 0.1];
@@ -124,10 +130,10 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
         
         currentX += colWidths[0];
         
-        // Link do vídeo
+        // Link do vídeo clicável
         if (exercise.videoLink) {
           pdf.setTextColor(59, 130, 246);
-          pdf.text('Ver exercício', currentX, yPosition + 8);
+          pdf.textWithLink('Ver vídeo', currentX, yPosition + 8, { url: exercise.videoLink });
           pdf.setTextColor(0, 0, 0);
         } else {
           pdf.text('-', currentX, yPosition + 8);
@@ -154,7 +160,7 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
       // Borda da tabela
       pdf.setDrawColor(25, 47, 89);
       pdf.setLineWidth(1);
-      pdf.rect(tableStartX, 70, tableWidth, yPosition - 70);
+      pdf.rect(tableStartX, 85, tableWidth, yPosition - 85);
     });
 
     const fileName = `ficha-treino-${Date.now()}.pdf`;
