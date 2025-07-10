@@ -19,6 +19,10 @@ const Index = () => {
     setExercises([...exercises, exercise]);
   };
 
+  const handleAddMultipleExercises = (newExercises: Exercise[]) => {
+    setExercises([...exercises, ...newExercises]);
+  };
+
   const handleRemoveExercise = (id: string) => {
     setExercises(exercises.filter(ex => ex.id !== id));
   };
@@ -69,7 +73,10 @@ const Index = () => {
           {/* Coluna Principal - Formulário e Lista */}
           <div className="lg:col-span-2 space-y-6">
             {/* Formulário de Exercícios */}
-            <WorkoutForm onAddExercise={handleAddExercise} />
+            <WorkoutForm 
+              onAddExercise={handleAddExercise}
+              onAddMultipleExercises={handleAddMultipleExercises}
+            />
 
             {/* Lista de Exercícios */}
             <ExerciseList
