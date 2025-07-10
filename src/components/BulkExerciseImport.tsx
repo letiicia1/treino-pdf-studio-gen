@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Upload } from "lucide-react";
 import { Exercise } from "@/types/workout";
 
@@ -13,14 +14,18 @@ interface BulkExerciseImportProps {
 
 const BulkExerciseImport = ({ onImportExercises }: BulkExerciseImportProps) => {
   const [bulkText, setBulkText] = useState('');
+  const [defaultCategory, setDefaultCategory] = useState<'A' | 'B' | 'C' | 'D' | 'E'>('A');
 
   const parseExercises = (text: string): Exercise[] => {
     const exercises: Exercise[] = [];
     const lines = text.split('\n').filter(line => line.trim());
+    let currentCategory = defaultCategory;
     
     for (const line of lines) {
-      // Skip lines that look like section headers (e.g., "TREINO A", "TREINO B")
-      if (line.match(/^TREINO [A-Z]/i)) {
+      // Check if line is a workout category header
+      const categoryMatch = line.match(/^TREINO ([A-E])/i);
+      if (categoryMatch) {
+        currentCategory = categoryMatch[1].toUpperCase() as 'A' | 'B' | 'C' | 'D' | 'E';
         continue;
       }
       
@@ -43,7 +48,8 @@ const BulkExerciseImport = ({ onImportExercises }: BulkExerciseImportProps) => {
           repetitions: repetitions.trim(),
           rest: rest || '',
           videoLink: videoLink && videoLink.startsWith('http') ? videoLink.trim() : '',
-          notes: ''
+          notes: '',
+          category: currentCategory
         });
       }
     }
@@ -71,11 +77,32 @@ const BulkExerciseImport = ({ onImportExercises }: BulkExerciseImportProps) => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
+          <Label htmlFor="defaultCategory">Categoria Padrão</Label>
+          <Select value={defaultCategory} onValueChange={(value: 'A' | 'B' | 'C' | 'D' | 'E') => setDefaultCategory(value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="A">Treino A</SelectItem>
+              <SelectItem value="B">Treino B</SelectItem>
+              <SelectItem value="C">Treino C</SelectItem>
+              <SelectItem value="D">Treino D</SelectItem>
+              <SelectItem value="E">Treino E</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Categoria aplicada quando não especificada no texto
+          </p>
+        </div>
+
+        <div>
           <Label htmlFor="bulkImport">
             Cole aqui sua lista de exercícios
           </Label>
           <p className="text-sm text-muted-foreground mb-2">
             Formato: Nome do Exercício [TAB] Link do Vídeo [TAB] Séries [TAB] Repetições [TAB] Pausa
+            <br />
+            Use "TREINO A", "TREINO B", etc. para separar categorias
           </p>
           <Textarea
             id="bulkImport"
@@ -84,10 +111,14 @@ const BulkExerciseImport = ({ onImportExercises }: BulkExerciseImportProps) => {
             placeholder="Cole aqui sua lista de exercícios...
 
 Exemplo:
+TREINO A
 Leg press 45	https://www.youtube.com/watch?v=exemplo	4	15	1 min.
-Rosca martelo com halter	https://youtu.be/exemplo	4	15	1 min."
+Rosca martelo com halter	https://youtu.be/exemplo	4	15	1 min.
+
+TREINO B
+Supino articulado inclinado	https://www.youtube.com/watch?v=exemplo	4	15	1 min."
             className="min-h-[120px] resize-none font-mono text-sm"
-            rows={6}
+            rows={8}
           />
         </div>
         

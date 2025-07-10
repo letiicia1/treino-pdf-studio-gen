@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Upload } from "lucide-react";
 import { Exercise } from "@/types/workout";
 import BulkExerciseImport from "./BulkExerciseImport";
@@ -22,7 +23,8 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
     repetitions: '',
     rest: '',
     videoLink: '',
-    notes: ''
+    notes: '',
+    category: 'A' as 'A' | 'B' | 'C' | 'D' | 'E'
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,7 +42,8 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
       repetitions: '',
       rest: '',
       videoLink: '',
-      notes: ''
+      notes: '',
+      category: 'A'
     });
   };
 
@@ -71,7 +74,22 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
           
           <TabsContent value="single" className="mt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="category">Categoria do Treino *</Label>
+                  <Select value={exercise.category} onValueChange={(value: 'A' | 'B' | 'C' | 'D' | 'E') => setExercise({ ...exercise, category: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">Treino A</SelectItem>
+                      <SelectItem value="B">Treino B</SelectItem>
+                      <SelectItem value="C">Treino C</SelectItem>
+                      <SelectItem value="D">Treino D</SelectItem>
+                      <SelectItem value="E">Treino E</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <Label htmlFor="name">Nome do Exercício *</Label>
                   <Input

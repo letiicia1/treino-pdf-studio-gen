@@ -1,4 +1,3 @@
-
 export interface Exercise {
   id: string;
   name: string;
@@ -7,6 +6,7 @@ export interface Exercise {
   rest: string;
   videoLink?: string;
   notes?: string;
+  category: 'A' | 'B' | 'C' | 'D' | 'E';
 }
 
 export interface WorkoutSheet {

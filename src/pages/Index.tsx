@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Dumbbell, FileText, Settings } from "lucide-react";
+import { Dumbbell, FileText } from "lucide-react";
 import WorkoutForm from "@/components/WorkoutForm";
 import ExerciseList from "@/components/ExerciseList";
 import BrandingSettings from "@/components/BrandingSettings";
@@ -31,6 +31,14 @@ const Index = () => {
     setBranding(newBranding);
   };
 
+  // Group exercises by category
+  const exercisesByCategory = exercises.reduce((acc, exercise) => {
+    const category = exercise.category || 'A';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(exercise);
+    return acc;
+  }, {} as Record<string, Exercise[]>);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
@@ -41,7 +49,7 @@ const Index = () => {
             <div>
               <h1 className="text-3xl font-bold">Gerador de Fichas de Treino</h1>
               <p className="text-blue-100 mt-1">
-                Crie fichas profissionais em PDF para seus alunos
+                Crie fichas profissionais em PDF para seus alunos organizadas por categoria
               </p>
             </div>
           </div>
@@ -49,25 +57,31 @@ const Index = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Status Card */}
-        <Card className="border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-transparent">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">Status da Ficha</h3>
-                <p className="text-muted-foreground">
-                  {exercises.length} exercícios adicionados
-                </p>
-              </div>
-              <div className="text-right">
+        {/* Status Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <Card className="border-l-4 border-l-blue-500">
+            <CardContent className="p-4">
+              <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
                   {exercises.length}
                 </div>
-                <div className="text-sm text-muted-foreground">Exercícios</div>
+                <div className="text-sm text-muted-foreground">Total</div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          {['A', 'B', 'C', 'D', 'E'].map(category => (
+            <Card key={category} className="border-l-4 border-l-purple-500">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {exercisesByCategory[category]?.length || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Treino {category}</div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Coluna Principal - Formulário e Lista */}
@@ -109,7 +123,7 @@ const Index = () => {
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
               <FileText className="h-4 w-4" />
               <span className="text-sm">
-                Sistema de Geração de Fichas de Treino - Desenvolvido com ❤️ para Personal Trainers
+                Sistema de Geração de Fichas de Treino por Categoria
               </span>
             </div>
           </CardContent>
