@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, FileSpreadsheet } from "lucide-react";
 import { Exercise } from "@/types/workout";
 import BulkExerciseImport from "./BulkExerciseImport";
+import FileUploader from "./FileUploader";
 
 interface WorkoutFormProps {
   onAddExercise: (exercise: Exercise) => void;
@@ -61,7 +62,7 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="single" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="single" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Individual
@@ -69,6 +70,10 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
             <TabsTrigger value="bulk" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
               Em Lote
+            </TabsTrigger>
+            <TabsTrigger value="file" className="flex items-center gap-2">
+              <FileSpreadsheet className="h-4 w-4" />
+              Planilha
             </TabsTrigger>
           </TabsList>
           
@@ -166,6 +171,10 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
           
           <TabsContent value="bulk" className="mt-6">
             <BulkExerciseImport onImportExercises={handleBulkImport} />
+          </TabsContent>
+
+          <TabsContent value="file" className="mt-6">
+            <FileUploader onImportExercises={handleBulkImport} />
           </TabsContent>
         </Tabs>
       </CardContent>

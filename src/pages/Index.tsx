@@ -2,18 +2,23 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Dumbbell, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dumbbell, FileText, Image, Smartphone } from "lucide-react";
 import WorkoutForm from "@/components/WorkoutForm";
 import ExerciseList from "@/components/ExerciseList";
 import BrandingSettings from "@/components/BrandingSettings";
 import PDFGenerator from "@/components/PDFGenerator";
+import ImageGenerator from "@/components/ImageGenerator";
+import WorkoutApp from "@/components/WorkoutApp";
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 const Index = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [branding, setBranding] = useState<BrandingConfig>({
-    studioName: 'PP Studio Personal'
+    studioName: 'PP STUDIO PERSONAL'
   });
+  const [selectedCategory, setSelectedCategory] = useState<'A' | 'B' | 'C' | 'D' | 'E'>('A');
 
   const handleAddExercise = (exercise: Exercise) => {
     setExercises([...exercises, exercise]);
@@ -42,14 +47,14 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-[#192F59] to-blue-700 text-white shadow-lg">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center gap-3">
             <Dumbbell className="h-8 w-8" />
             <div>
-              <h1 className="text-3xl font-bold">Gerador de Fichas de Treino</h1>
+              <h1 className="text-3xl font-bold">Sistema de Fichas de Treino</h1>
               <p className="text-blue-100 mt-1">
-                Crie fichas profissionais em PDF para seus alunos organizadas por categoria
+                Crie fichas profissionais em PDF, imagem e aplicativo para seus alunos
               </p>
             </div>
           </div>
@@ -99,7 +104,7 @@ const Index = () => {
             />
           </div>
 
-          {/* Sidebar - Configurações e PDF */}
+          {/* Sidebar - Configurações e Geradores */}
           <div className="space-y-6">
             {/* Personalização da Marca */}
             <BrandingSettings
@@ -109,11 +114,75 @@ const Index = () => {
 
             <Separator />
 
-            {/* Gerador de PDF */}
-            <PDFGenerator
-              exercises={exercises}
-              branding={branding}
-            />
+            {/* Geradores */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Gerar Fichas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="pdf" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="pdf" className="flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      PDF
+                    </TabsTrigger>
+                    <TabsTrigger value="image" className="flex items-center gap-1">
+                      <Image className="h-3 w-3" />
+                      Imagem
+                    </TabsTrigger>
+                    <TabsTrigger value="app" className="flex items-center gap-1">
+                      <Smartphone className="h-3 w-3" />
+                      App
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="pdf" className="mt-4">
+                    <PDFGenerator
+                      exercises={exercises}
+                      branding={branding}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="image" className="mt-4">
+                    <ImageGenerator
+                      exercises={exercises}
+                      branding={branding}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="app" className="mt-4">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Selecionar Treino:</label>
+                        <Select 
+                          value={selectedCategory} 
+                          onValueChange={(value: 'A' | 'B' | 'C' | 'D' | 'E') => setSelectedCategory(value)}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="A">Treino A</SelectItem>
+                            <SelectItem value="B">Treino B</SelectItem>
+                            <SelectItem value="C">Treino C</SelectItem>
+                            <SelectItem value="D">Treino D</SelectItem>
+                            <SelectItem value="E">Treino E</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <WorkoutApp
+                        exercises={exercises}
+                        branding={branding}
+                        selectedCategory={selectedCategory}
+                      />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -123,7 +192,7 @@ const Index = () => {
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
               <FileText className="h-4 w-4" />
               <span className="text-sm">
-                Sistema de Geração de Fichas de Treino por Categoria
+                Sistema Completo de Geração de Fichas de Treino
               </span>
             </div>
           </CardContent>

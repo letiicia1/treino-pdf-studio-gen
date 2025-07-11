@@ -81,7 +81,7 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
       yPosition = 85;
       const tableStartX = 15;
       const tableWidth = pageWidth - 30;
-      const colWidths = [tableWidth * 0.5, tableWidth * 0.3, tableWidth * 0.1, tableWidth * 0.1];
+      const colWidths = [tableWidth * 0.3, tableWidth * 0.2, tableWidth * 0.1, tableWidth * 0.1, tableWidth * 0.1, tableWidth * 0.2];
       const rowHeight = 12;
 
       // Header da tabela
@@ -90,7 +90,7 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
       
       pdf.setTextColor(255, 255, 255);
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(11);
+      pdf.setFontSize(10);
       
       let currentX = tableStartX + 2;
       pdf.text('EXERCÍCIO', currentX, yPosition + 8);
@@ -100,6 +100,10 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
       pdf.text('SÉRIES', currentX, yPosition + 8);
       currentX += colWidths[2];
       pdf.text('REPS', currentX, yPosition + 8);
+      currentX += colWidths[3];
+      pdf.text('PAUSA', currentX, yPosition + 8);
+      currentX += colWidths[4];
+      pdf.text('OBSERVAÇÃO', currentX, yPosition + 8);
 
       yPosition += rowHeight;
 
@@ -120,7 +124,7 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
         // Texto da linha
         pdf.setTextColor(0, 0, 0);
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(10);
+        pdf.setFontSize(9);
 
         currentX = tableStartX + 2;
         
@@ -148,6 +152,17 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
         
         // Repetições
         pdf.text(exercise.repetitions, currentX, yPosition + 8);
+
+        currentX += colWidths[3];
+        
+        // Pausa
+        pdf.text(exercise.rest || '-', currentX, yPosition + 8);
+
+        currentX += colWidths[4];
+        
+        // Observações
+        const notes = pdf.splitTextToSize(exercise.notes || '-', colWidths[5] - 4);
+        pdf.text(notes[0], currentX, yPosition + 8);
 
         // Linha de separação
         pdf.setDrawColor(200, 200, 200);
