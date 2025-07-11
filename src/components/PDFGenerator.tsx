@@ -1,281 +1,166 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, FileText, Dumbbell } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Download } from "lucide-react";
 import jsPDF from 'jspdf';
-import { BrandingConfig } from "@/types/workout";
+import 'jspdf-autotable';
+import { Exercise, BrandingConfig } from "@/types/workout";
 
 interface PDFGeneratorProps {
-  exercises: any[];
+  exercises: Exercise[];
   branding: BrandingConfig;
 }
 
-const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
-  const [workoutData, setWorkoutData] = React.useState({
-    title: 'Ficha de Treino',
-    generalInstructions: ''
-  });
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
-  const generatePDF = async () => {
-    if (exercises.length === 0) {
-      alert('Adicione pelo menos um exercício antes de gerar o PDF.');
+const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
+  const [studentName, setStudentName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<'A' | 'B' | 'C' | 'D' | 'E'>('A');
+  const [generalInstructions, setGeneralInstructions] = useState('');
+
+  const generatePDF = () => {
+    const categoryExercises = exercises.filter(ex => ex.category === selectedCategory);
+    
+    if (categoryExercises.length === 0) {
+      alert('Adicione exercícios ao treino selecionado primeiro.');
       return;
     }
 
-    const pdf = new jsPDF();
-    const pageWidth = pdf.internal.pageSize.width;
-    const pageHeight = pdf.internal.pageSize.height;
-
-    // Group exercises by category
-    const exercisesByCategory = exercises.reduce((acc, exercise) => {
-      const category = exercise.category || 'A';
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(exercise);
-      return acc;
-    }, {} as Record<string, any[]>);
-
-    const categories = ['A', 'B', 'C', 'D', 'E'].filter(cat => exercisesByCategory[cat]?.length > 0);
+    const doc = new jsPDF();
     
-    categories.forEach((category, pageIndex) => {
-      if (pageIndex > 0) {
-        pdf.addPage();
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(25, 47, 89);
+    doc.text(branding.studioName, 20, 25);
+    
+    doc.setFontSize(16);
+    doc.text('FICHA DE TREINO', 20, 35);
+    
+    if (studentName) {
+      doc.setFontSize(12);
+      doc.text(`Aluno: ${studentName}`, 20, 45);
+    }
+    
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`TREINO ${selectedCategory}`, 20, studentName ? 55 : 45);
+
+    // Table data
+    const tableData = categoryExercises.map(exercise => [
+      exercise.name,
+      exercise.videoLink || '',
+      exercise.series.toString(),
+      exercise.repetitions,
+      exercise.rest || '',
+      exercise.notes || ''
+    ]);
+
+    // Generate table
+    doc.autoTable({
+      head: [['Exercício', 'Vídeo', 'Séries', 'Repetições', 'Pausa', 'Observações']],
+      body: tableData,
+      startY: studentName ? 65 : 55,
+      styles: {
+        fontSize: 10,
+        cellPadding: 4,
+      },
+      headStyles: {
+        fillColor: [25, 47, 89],
+        textColor: 255,
+        fontSize: 11,
+        fontStyle: 'bold',
+      },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 35 }
       }
-
-      let yPosition = 20;
-
-      // Header azul marinho
-      pdf.setFillColor(25, 47, 89); // Azul marinho
-      pdf.rect(0, 0, pageWidth, 30, 'F');
-      
-      // Logo (se disponível)
-      if (branding.logo) {
-        try {
-          pdf.addImage(branding.logo, 'JPEG', 15, 5, 20, 20);
-        } catch (error) {
-          console.log('Erro ao adicionar logo:', error);
-        }
-      }
-
-      // Nome do studio centralizado
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(18);
-      pdf.text(branding.studioName, pageWidth / 2, 18, { align: 'center' });
-
-      // Título FICHA DE TREINO centralizado com ícone
-      yPosition = 45;
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(20);
-      
-      // Adicionar ícone de haltere (simulado com texto)
-      pdf.setFontSize(16);
-      pdf.text('🏋️', pageWidth / 2 - 50, yPosition);
-      pdf.setFontSize(20);
-      pdf.text('FICHA DE TREINO', pageWidth / 2, yPosition, { align: 'center' });
-
-      // Título do treino mais próximo da tabela
-      yPosition = 70;
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(22);
-      pdf.text(`TREINO ${category}`, pageWidth / 2, yPosition, { align: 'center' });
-
-      // Preparar tabela
-      yPosition = 85;
-      const tableStartX = 15;
-      const tableWidth = pageWidth - 30;
-      const colWidths = [tableWidth * 0.3, tableWidth * 0.15, tableWidth * 0.1, tableWidth * 0.1, tableWidth * 0.1, tableWidth * 0.25];
-      const rowHeight = 15; // Aumentado para melhor legibilidade
-
-      // Header da tabela com fundo preto
-      pdf.setFillColor(0, 0, 0); // Preto
-      pdf.rect(tableStartX, yPosition, tableWidth, rowHeight, 'F');
-      
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(11); // Fonte maior
-      
-      let currentX = tableStartX + 2;
-      pdf.text('EXERCÍCIO', currentX, yPosition + 10);
-      currentX += colWidths[0];
-      pdf.text('VÍDEO', currentX, yPosition + 10);
-      currentX += colWidths[1];
-      pdf.text('SÉRIES', currentX, yPosition + 10);
-      currentX += colWidths[2];
-      pdf.text('REPS', currentX, yPosition + 10);
-      currentX += colWidths[3];
-      pdf.text('PAUSA', currentX, yPosition + 10);
-      currentX += colWidths[4];
-      pdf.text('OBSERVAÇÃO', currentX, yPosition + 10);
-
-      yPosition += rowHeight;
-
-      // Linhas da tabela
-      exercisesByCategory[category].forEach((exercise, index) => {
-        // Verificar se precisa de nova página
-        if (yPosition > pageHeight - 50) {
-          pdf.addPage();
-          yPosition = 30;
-        }
-
-        // Fundo azul marinho apenas para nome do exercício
-        pdf.setFillColor(25, 47, 89);
-        pdf.rect(tableStartX, yPosition, colWidths[0], rowHeight, 'F');
-
-        currentX = tableStartX + 2;
-        
-        // Nome do exercício com texto branco e fonte maior
-        pdf.setTextColor(255, 255, 255);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(10); // Fonte maior
-        const exerciseName = pdf.splitTextToSize(exercise.name, colWidths[0] - 4);
-        pdf.text(exerciseName[0], currentX, yPosition + 10);
-        
-        currentX += colWidths[0];
-        
-        // Resetar cor para preto para outras colunas
-        pdf.setTextColor(0, 0, 0);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(10); // Fonte maior
-        
-        // Link do vídeo clicável
-        if (exercise.videoLink) {
-          pdf.setTextColor(59, 130, 246);
-          pdf.textWithLink('Ver vídeo', currentX, yPosition + 10, { url: exercise.videoLink });
-          pdf.setTextColor(0, 0, 0);
-        } else {
-          pdf.text('-', currentX, yPosition + 10);
-        }
-        
-        currentX += colWidths[1];
-        
-        // Séries
-        pdf.text(String(exercise.series), currentX, yPosition + 10);
-        
-        currentX += colWidths[2];
-        
-        // Repetições
-        pdf.text(exercise.repetitions, currentX, yPosition + 10);
-
-        currentX += colWidths[3];
-        
-        // Pausa
-        pdf.text(exercise.rest || '-', currentX, yPosition + 10);
-
-        currentX += colWidths[4];
-        
-        // Observações
-        const notes = pdf.splitTextToSize(exercise.notes || '-', colWidths[5] - 4);
-        pdf.text(notes[0], currentX, yPosition + 10);
-
-        // Linha de separação
-        pdf.setDrawColor(200, 200, 200);
-        pdf.setLineWidth(0.2);
-        pdf.line(tableStartX, yPosition + rowHeight, tableStartX + tableWidth, yPosition + rowHeight);
-
-        yPosition += rowHeight;
-      });
-
-      // Orientações gerais (se houver)
-      if (workoutData.generalInstructions.trim()) {
-        yPosition += 15;
-        
-        // Verificar se precisa de nova página
-        if (yPosition > pageHeight - 40) {
-          pdf.addPage();
-          yPosition = 30;
-        }
-
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(14);
-        pdf.text('ORIENTAÇÕES GERAIS:', tableStartX, yPosition);
-        
-        yPosition += 12;
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(11);
-        const instructions = pdf.splitTextToSize(workoutData.generalInstructions, tableWidth);
-        pdf.text(instructions, tableStartX, yPosition);
-      }
-
-      // Borda da tabela
-      pdf.setDrawColor(25, 47, 89);
-      pdf.setLineWidth(1);
-      pdf.rect(tableStartX, 85, tableWidth, yPosition - 85 - (workoutData.generalInstructions.trim() ? 30 : 0));
     });
 
-    const fileName = `fichaPPstudioPersonal-${Date.now()}.pdf`;
-    pdf.save(fileName);
+    // General instructions
+    if (generalInstructions) {
+      const finalY = (doc as any).lastAutoTable.finalY + 20;
+      doc.setFontSize(12);
+      doc.setTextColor(25, 47, 89);
+      doc.text('Orientações Gerais:', 20, finalY);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      const splitText = doc.splitTextToSize(generalInstructions, 170);
+      doc.text(splitText, 20, finalY + 10);
+    }
+
+    // Save
+    const fileName = `ficha-treino-${selectedCategory}${studentName ? `-${studentName.replace(/\s+/g, '-')}` : ''}.pdf`;
+    doc.save(fileName);
   };
-
-  const canGenerate = exercises.length > 0;
-
-  // Count exercises by category
-  const exercisesByCategory = exercises.reduce((acc, exercise) => {
-    const category = exercise.category || 'A';
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Gerar Ficha em PDF
+          Gerar PDF
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="title">Título da Ficha</Label>
+          <Label htmlFor="student-name">Nome do Aluno (opcional)</Label>
           <Input
-            id="title"
-            value={workoutData.title}
-            onChange={(e) => setWorkoutData({ ...workoutData, title: e.target.value })}
+            id="student-name"
+            value={studentName}
+            onChange={(e) => setStudentName(e.target.value)}
+            placeholder="João Silva"
           />
         </div>
 
         <div>
-          <Label htmlFor="instructions">Orientações Gerais (opcional)</Label>
+          <Label htmlFor="category">Categoria do Treino</Label>
+          <Select value={selectedCategory} onValueChange={(value: 'A' | 'B' | 'C' | 'D' | 'E') => setSelectedCategory(value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="A">Treino A</SelectItem>
+              <SelectItem value="B">Treino B</SelectItem>
+              <SelectItem value="C">Treino C</SelectItem>
+              <SelectItem value="D">Treino D</SelectItem>
+              <SelectItem value="E">Treino E</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="general-instructions">Orientações Gerais (opcional)</Label>
           <Textarea
-            id="instructions"
-            value={workoutData.generalInstructions}
-            onChange={(e) => setWorkoutData({ ...workoutData, generalInstructions: e.target.value })}
-            placeholder="Adicione orientações gerais do treino..."
+            id="general-instructions"
+            value={generalInstructions}
+            onChange={(e) => setGeneralInstructions(e.target.value)}
+            placeholder="Orientações gerais do treino, como aquecimento, alongamento, etc."
             rows={3}
           />
         </div>
 
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
-          <h4 className="font-semibold mb-2">Preview da Ficha:</h4>
-          <div className="text-sm space-y-1">
-            <p><strong>Studio:</strong> {branding.studioName}</p>
-            <p><strong>Total de exercícios:</strong> {exercises.length}</p>
-            {Object.entries(exercisesByCategory).map(([category, count]) => (
-              <p key={category}><strong>Treino {category}:</strong> {count} exercício(s)</p>
-            ))}
-            <p><strong>Data:</strong> {new Date().toLocaleDateString('pt-BR')}</p>
-          </div>
-        </div>
-
-        <Button
-          onClick={generatePDF}
-          disabled={!canGenerate}
-          className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
-          size="lg"
-        >
-          <Download className="h-5 w-5 mr-2" />
-          {canGenerate ? 'Gerar e Baixar PDF' : 'Adicione exercícios para gerar'}
+        <Button onClick={generatePDF} className="w-full">
+          <Download className="h-4 w-4 mr-2" />
+          Gerar PDF
         </Button>
 
-        {!canGenerate && (
-          <p className="text-sm text-muted-foreground text-center">
-            Adicione exercícios para gerar o PDF
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground">
+          Exercícios do Treino {selectedCategory}: {exercises.filter(ex => ex.category === selectedCategory).length}
+        </p>
       </CardContent>
     </Card>
   );

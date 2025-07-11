@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, ExternalLink, Clock, Repeat, Phone, Mail, MapPin, ShoppingBag } from "lucide-react";
+import { Play, ExternalLink, Clock, Repeat, Phone, Mail, MapPin, ShoppingBag, Dumbbell } from "lucide-react";
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 interface WorkoutAppProps {
@@ -42,6 +42,12 @@ const WorkoutApp = ({ exercises, branding, selectedCategory, appConfig }: Workou
     alert('Link copiado para a área de transferência!');
   };
 
+  const getYouTubeVideoId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   const primaryColor = appConfig?.primaryColor || '#192F59';
   const studioName = appConfig?.studioName || branding.studioName;
 
@@ -68,19 +74,26 @@ const WorkoutApp = ({ exercises, branding, selectedCategory, appConfig }: Workou
         }}
       >
         <CardHeader className="text-center">
-          {appConfig?.logoUrl && (
-            <img
-              src={appConfig.logoUrl}
-              alt="Logo"
-              className="h-16 w-16 mx-auto mb-4 object-contain"
-            />
-          )}
-          <h1 className="text-2xl font-bold">{studioName}</h1>
-          <p className="opacity-90">Aplicativo de Treino</p>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            {appConfig?.logoUrl ? (
+              <img
+                src={appConfig.logoUrl}
+                alt="Logo"
+                className="h-16 w-16 object-contain"
+              />
+            ) : (
+              <Dumbbell className="h-16 w-16" />
+            )}
+            <div>
+              <h1 className="text-2xl font-bold">{studioName}</h1>
+              <p className="opacity-90 text-sm">Aplicativo de Treino</p>
+            </div>
+          </div>
+          
           {appConfig?.welcomeMessage && (
-            <p className="text-sm opacity-80 mt-2">{appConfig.welcomeMessage}</p>
+            <p className="text-sm opacity-80 mb-3">{appConfig.welcomeMessage}</p>
           )}
-          <Badge variant="secondary" className="mx-auto w-fit mt-2">
+          <Badge variant="secondary" className="mx-auto w-fit">
             TREINO {selectedCategory}
           </Badge>
         </CardHeader>
@@ -124,60 +137,107 @@ const WorkoutApp = ({ exercises, branding, selectedCategory, appConfig }: Workou
         )}
       </div>
 
-      {/* Lista de Exercícios */}
-      <div className="space-y-3">
-        {categoryExercises.map((exercise, index) => (
-          <Card key={exercise.id} className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="flex items-center">
+      {/* Lista de Exercícios com Vídeos Integrados */}
+      <div className="space-y-4">
+        {categoryExercises.map((exercise, index) => {
+          const videoId = exercise.videoLink ? getYouTubeVideoId(exercise.videoLink) : null;
+          
+          return (
+            <Card key={exercise.id} className="overflow-hidden">
+              <CardContent className="p-0">
+                {/* Header do Exercício */}
                 <div 
-                  className="text-white p-4 flex items-center justify-center min-w-[60px]"
+                  className="text-white p-4 flex items-center justify-between"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  <span className="text-lg font-bold">{index + 1}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl font-bold bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <h3 className="font-semibold text-lg">{exercise.name}</h3>
+                  </div>
                 </div>
-                <div className="flex-1 p-4">
-                  <h3 className="font-semibold text-lg mb-2">{exercise.name}</h3>
-                  
-                  <div className="flex flex-wrap gap-4 mb-3">
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <Repeat className="h-4 w-4" />
-                      <span>{exercise.series} séries</span>
+
+                <div className="p-4">
+                  {/* Vídeo do YouTube Integrado */}
+                  {videoId && (
+                    <div className="mb-4">
+                      <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={`https://www.youtube.com/embed/${videoId}`}
+                          title={exercise.name}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full"
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <Play className="h-4 w-4" />
-                      <span>{exercise.repetitions} reps</span>
+                  )}
+
+                  {/* Informações do Exercício */}
+                  <div className="grid grid-cols-3 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 text-sm font-medium text-gray-700 mb-1">
+                        <Repeat className="h-4 w-4" />
+                        <span>Séries</span>
+                      </div>
+                      <div className="text-xl font-bold" style={{ color: primaryColor }}>
+                        {exercise.series}
+                      </div>
                     </div>
+                    
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 text-sm font-medium text-gray-700 mb-1">
+                        <Play className="h-4 w-4" />
+                        <span>Repetições</span>
+                      </div>
+                      <div className="text-xl font-bold" style={{ color: primaryColor }}>
+                        {exercise.repetitions}
+                      </div>
+                    </div>
+                    
                     {exercise.rest && (
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Clock className="h-4 w-4" />
-                        <span>{exercise.rest}</span>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-sm font-medium text-gray-700 mb-1">
+                          <Clock className="h-4 w-4" />
+                          <span>Pausa</span>
+                        </div>
+                        <div className="text-lg font-bold" style={{ color: primaryColor }}>
+                          {exercise.rest}
+                        </div>
                       </div>
                     )}
                   </div>
 
+                  {/* Observações */}
                   {exercise.notes && (
-                    <p className="text-sm text-gray-600 mb-3 italic">
-                      {exercise.notes}
-                    </p>
+                    <div className="p-3 bg-blue-50 rounded-lg border-l-4" style={{ borderLeftColor: primaryColor }}>
+                      <h4 className="font-semibold text-sm text-gray-700 mb-1">Observações:</h4>
+                      <p className="text-sm text-gray-600">{exercise.notes}</p>
+                    </div>
                   )}
 
-                  {exercise.videoLink && (
+                  {/* Link do Vídeo como Botão Alternativo */}
+                  {exercise.videoLink && !videoId && (
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => window.open(exercise.videoLink, '_blank')}
-                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                      className="w-full mt-3"
+                      style={{ color: primaryColor, borderColor: primaryColor }}
                     >
                       <Play className="h-3 w-3 mr-1" />
-                      Ver Vídeo
+                      Assistir Vídeo
                     </Button>
                   )}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Footer com Informações */}

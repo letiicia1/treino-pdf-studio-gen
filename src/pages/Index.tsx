@@ -4,12 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dumbbell, FileText, Image, Smartphone, Palette, Users, Archive } from "lucide-react";
+import { Dumbbell, FileText, Smartphone, Palette, Users, Archive } from "lucide-react";
 import WorkoutForm from "@/components/WorkoutForm";
 import ExerciseList from "@/components/ExerciseList";
 import BrandingSettings from "@/components/BrandingSettings";
 import PDFGenerator from "@/components/PDFGenerator";
-import ImageGenerator from "@/components/ImageGenerator";
 import WorkoutApp from "@/components/WorkoutApp";
 import AppCustomization from "@/components/AppCustomization";
 import AppBuilder from "@/components/AppBuilder";
@@ -76,7 +75,7 @@ const Index = () => {
             <div>
               <h1 className="text-3xl font-bold">Sistema de Fichas de Treino</h1>
               <p className="text-blue-100 mt-1">
-                Crie fichas profissionais em PDF, imagem e aplicativo para seus alunos
+                Crie fichas profissionais em PDF e aplicativo interativo para seus alunos
               </p>
             </div>
           </div>
@@ -146,14 +145,10 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="pdf" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="pdf" className="flex items-center gap-1 text-xs">
                       <FileText className="h-3 w-3" />
                       PDF
-                    </TabsTrigger>
-                    <TabsTrigger value="image" className="flex items-center gap-1 text-xs">
-                      <Image className="h-3 w-3" />
-                      Imagem
                     </TabsTrigger>
                     <TabsTrigger value="app" className="flex items-center gap-1 text-xs">
                       <Smartphone className="h-3 w-3" />
@@ -163,13 +158,6 @@ const Index = () => {
                   
                   <TabsContent value="pdf" className="mt-4">
                     <PDFGenerator
-                      exercises={exercises}
-                      branding={branding}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="image" className="mt-4">
-                    <ImageGenerator
                       exercises={exercises}
                       branding={branding}
                     />
@@ -212,7 +200,7 @@ const Index = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Gerenciamento
+                  Gerenciamento Avançado
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -261,7 +249,7 @@ const Index = () => {
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
               <FileText className="h-4 w-4" />
               <span className="text-sm">
-                Sistema Completo de Geração de Fichas de Treino
+                Sistema Completo de Geração de Fichas de Treino e Aplicativos Interativos
               </span>
             </div>
           </CardContent>
