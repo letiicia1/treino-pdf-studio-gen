@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dumbbell, FileText, Image, Smartphone, Palette } from "lucide-react";
+import { Dumbbell, FileText, Image, Smartphone, Palette, Users, Archive } from "lucide-react";
 import WorkoutForm from "@/components/WorkoutForm";
 import ExerciseList from "@/components/ExerciseList";
 import BrandingSettings from "@/components/BrandingSettings";
@@ -12,6 +12,8 @@ import PDFGenerator from "@/components/PDFGenerator";
 import ImageGenerator from "@/components/ImageGenerator";
 import WorkoutApp from "@/components/WorkoutApp";
 import AppCustomization from "@/components/AppCustomization";
+import AppBuilder from "@/components/AppBuilder";
+import WorkoutLibrary from "@/components/WorkoutLibrary";
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 const Index = () => {
@@ -50,6 +52,10 @@ const Index = () => {
 
   const handleUpdateAppConfig = (newConfig: any) => {
     setAppConfig(newConfig);
+  };
+
+  const handleLoadWorkout = (newExercises: Exercise[]) => {
+    setExercises(newExercises);
   };
 
   // Group exercises by category
@@ -135,27 +141,23 @@ const Index = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Gerar Fichas
+                  Sistema Completo
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="pdf" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="pdf" className="flex items-center gap-1">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="pdf" className="flex items-center gap-1 text-xs">
                       <FileText className="h-3 w-3" />
                       PDF
                     </TabsTrigger>
-                    <TabsTrigger value="image" className="flex items-center gap-1">
+                    <TabsTrigger value="image" className="flex items-center gap-1 text-xs">
                       <Image className="h-3 w-3" />
                       Imagem
                     </TabsTrigger>
-                    <TabsTrigger value="app" className="flex items-center gap-1">
+                    <TabsTrigger value="app" className="flex items-center gap-1 text-xs">
                       <Smartphone className="h-3 w-3" />
                       App
-                    </TabsTrigger>
-                    <TabsTrigger value="customize" className="flex items-center gap-1">
-                      <Palette className="h-3 w-3" />
-                      Config
                     </TabsTrigger>
                   </TabsList>
                   
@@ -201,11 +203,50 @@ const Index = () => {
                       />
                     </div>
                   </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {/* Seção de Gerenciamento */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Gerenciamento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="customize" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="customize" className="flex items-center gap-1 text-xs">
+                      <Palette className="h-3 w-3" />
+                      Config
+                    </TabsTrigger>
+                    <TabsTrigger value="apps" className="flex items-center gap-1 text-xs">
+                      <Users className="h-3 w-3" />
+                      Apps
+                    </TabsTrigger>
+                    <TabsTrigger value="library" className="flex items-center gap-1 text-xs">
+                      <Archive className="h-3 w-3" />
+                      Biblioteca
+                    </TabsTrigger>
+                  </TabsList>
 
                   <TabsContent value="customize" className="mt-4">
                     <AppCustomization
                       appConfig={appConfig}
                       onUpdateConfig={handleUpdateAppConfig}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="apps" className="mt-4">
+                    <AppBuilder exercises={exercises} />
+                  </TabsContent>
+
+                  <TabsContent value="library" className="mt-4">
+                    <WorkoutLibrary 
+                      currentExercises={exercises}
+                      onLoadWorkout={handleLoadWorkout}
                     />
                   </TabsContent>
                 </Tabs>

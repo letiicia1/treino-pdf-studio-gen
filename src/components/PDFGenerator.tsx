@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Dumbbell } from "lucide-react";
 import jsPDF from 'jspdf';
 import { BrandingConfig } from "@/types/workout";
 
@@ -66,46 +66,51 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
       pdf.setFontSize(18);
       pdf.text(branding.studioName, pageWidth / 2, 18, { align: 'center' });
 
-      // Título FICHA DE TREINO centralizado
+      // Título FICHA DE TREINO centralizado com ícone
       yPosition = 45;
       pdf.setTextColor(0, 0, 0);
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(18);
+      pdf.setFontSize(20);
+      
+      // Adicionar ícone de haltere (simulado com texto)
+      pdf.setFontSize(16);
+      pdf.text('🏋️', pageWidth / 2 - 50, yPosition);
+      pdf.setFontSize(20);
       pdf.text('FICHA DE TREINO', pageWidth / 2, yPosition, { align: 'center' });
 
-      // Título do treino centralizado
-      yPosition = 65;
+      // Título do treino mais próximo da tabela
+      yPosition = 70;
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(20);
+      pdf.setFontSize(22);
       pdf.text(`TREINO ${category}`, pageWidth / 2, yPosition, { align: 'center' });
 
       // Preparar tabela
       yPosition = 85;
       const tableStartX = 15;
       const tableWidth = pageWidth - 30;
-      const colWidths = [tableWidth * 0.25, tableWidth * 0.15, tableWidth * 0.08, tableWidth * 0.08, tableWidth * 0.08, tableWidth * 0.18, tableWidth * 0.18];
-      const rowHeight = 12;
+      const colWidths = [tableWidth * 0.3, tableWidth * 0.15, tableWidth * 0.1, tableWidth * 0.1, tableWidth * 0.1, tableWidth * 0.25];
+      const rowHeight = 15; // Aumentado para melhor legibilidade
 
-      // Header da tabela
-      pdf.setFillColor(25, 47, 89); // Azul marinho
+      // Header da tabela com fundo preto
+      pdf.setFillColor(0, 0, 0); // Preto
       pdf.rect(tableStartX, yPosition, tableWidth, rowHeight, 'F');
       
       pdf.setTextColor(255, 255, 255);
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(9);
+      pdf.setFontSize(11); // Fonte maior
       
       let currentX = tableStartX + 2;
-      pdf.text('EXERCÍCIO', currentX, yPosition + 8);
+      pdf.text('EXERCÍCIO', currentX, yPosition + 10);
       currentX += colWidths[0];
-      pdf.text('VÍDEO', currentX, yPosition + 8);
+      pdf.text('VÍDEO', currentX, yPosition + 10);
       currentX += colWidths[1];
-      pdf.text('SÉRIES', currentX, yPosition + 8);
+      pdf.text('SÉRIES', currentX, yPosition + 10);
       currentX += colWidths[2];
-      pdf.text('REPS', currentX, yPosition + 8);
+      pdf.text('REPS', currentX, yPosition + 10);
       currentX += colWidths[3];
-      pdf.text('PAUSA', currentX, yPosition + 8);
+      pdf.text('PAUSA', currentX, yPosition + 10);
       currentX += colWidths[4];
-      pdf.text('OBSERVAÇÃO', currentX, yPosition + 8);
+      pdf.text('OBSERVAÇÃO', currentX, yPosition + 10);
 
       yPosition += rowHeight;
 
@@ -117,60 +122,55 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
           yPosition = 30;
         }
 
-        // Fundo azul marinho para nome do exercício
+        // Fundo azul marinho apenas para nome do exercício
         pdf.setFillColor(25, 47, 89);
         pdf.rect(tableStartX, yPosition, colWidths[0], rowHeight, 'F');
 
-        // Fundo alternado para as outras colunas
-        if (index % 2 === 0) {
-          pdf.setFillColor(248, 250, 252);
-          pdf.rect(tableStartX + colWidths[0], yPosition, tableWidth - colWidths[0], rowHeight, 'F');
-        }
-
         currentX = tableStartX + 2;
         
-        // Nome do exercício com texto branco
+        // Nome do exercício com texto branco e fonte maior
         pdf.setTextColor(255, 255, 255);
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
+        pdf.setFontSize(10); // Fonte maior
         const exerciseName = pdf.splitTextToSize(exercise.name, colWidths[0] - 4);
-        pdf.text(exerciseName[0], currentX, yPosition + 8);
+        pdf.text(exerciseName[0], currentX, yPosition + 10);
         
         currentX += colWidths[0];
         
         // Resetar cor para preto para outras colunas
         pdf.setTextColor(0, 0, 0);
         pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10); // Fonte maior
         
         // Link do vídeo clicável
         if (exercise.videoLink) {
           pdf.setTextColor(59, 130, 246);
-          pdf.textWithLink('Ver vídeo', currentX, yPosition + 8, { url: exercise.videoLink });
+          pdf.textWithLink('Ver vídeo', currentX, yPosition + 10, { url: exercise.videoLink });
           pdf.setTextColor(0, 0, 0);
         } else {
-          pdf.text('-', currentX, yPosition + 8);
+          pdf.text('-', currentX, yPosition + 10);
         }
         
         currentX += colWidths[1];
         
         // Séries
-        pdf.text(String(exercise.series), currentX, yPosition + 8);
+        pdf.text(String(exercise.series), currentX, yPosition + 10);
         
         currentX += colWidths[2];
         
         // Repetições
-        pdf.text(exercise.repetitions, currentX, yPosition + 8);
+        pdf.text(exercise.repetitions, currentX, yPosition + 10);
 
         currentX += colWidths[3];
         
         // Pausa
-        pdf.text(exercise.rest || '-', currentX, yPosition + 8);
+        pdf.text(exercise.rest || '-', currentX, yPosition + 10);
 
         currentX += colWidths[4];
         
         // Observações
         const notes = pdf.splitTextToSize(exercise.notes || '-', colWidths[5] - 4);
-        pdf.text(notes[0], currentX, yPosition + 8);
+        pdf.text(notes[0], currentX, yPosition + 10);
 
         // Linha de separação
         pdf.setDrawColor(200, 200, 200);
@@ -182,7 +182,7 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
 
       // Orientações gerais (se houver)
       if (workoutData.generalInstructions.trim()) {
-        yPosition += 10;
+        yPosition += 15;
         
         // Verificar se precisa de nova página
         if (yPosition > pageHeight - 40) {
@@ -191,12 +191,12 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
         }
 
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(12);
+        pdf.setFontSize(14);
         pdf.text('ORIENTAÇÕES GERAIS:', tableStartX, yPosition);
         
-        yPosition += 10;
+        yPosition += 12;
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(10);
+        pdf.setFontSize(11);
         const instructions = pdf.splitTextToSize(workoutData.generalInstructions, tableWidth);
         pdf.text(instructions, tableStartX, yPosition);
       }
