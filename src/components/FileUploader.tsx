@@ -26,7 +26,7 @@ const FileUploader = ({ onImportExercises }: FileUploaderProps) => {
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
 
       const exercises: Exercise[] = [];
-      let currentCategory = 'A';
+      let currentCategory: 'A' | 'B' | 'C' | 'D' | 'E' = 'A';
 
       for (const row of jsonData) {
         if (!row || row.length === 0) continue;
@@ -36,7 +36,10 @@ const FileUploader = ({ onImportExercises }: FileUploaderProps) => {
         // Check for category headers
         const categoryMatch = firstCell.match(/^TREINO ([A-E])/i);
         if (categoryMatch) {
-          currentCategory = categoryMatch[1].toUpperCase() as 'A' | 'B' | 'C' | 'D' | 'E';
+          const matchedCategory = categoryMatch[1].toUpperCase();
+          if (['A', 'B', 'C', 'D', 'E'].includes(matchedCategory)) {
+            currentCategory = matchedCategory as 'A' | 'B' | 'C' | 'D' | 'E';
+          }
           continue;
         }
 

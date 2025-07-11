@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dumbbell, FileText, Image, Smartphone } from "lucide-react";
+import { Dumbbell, FileText, Image, Smartphone, Palette } from "lucide-react";
 import WorkoutForm from "@/components/WorkoutForm";
 import ExerciseList from "@/components/ExerciseList";
 import BrandingSettings from "@/components/BrandingSettings";
 import PDFGenerator from "@/components/PDFGenerator";
 import ImageGenerator from "@/components/ImageGenerator";
 import WorkoutApp from "@/components/WorkoutApp";
+import AppCustomization from "@/components/AppCustomization";
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 const Index = () => {
@@ -19,6 +20,17 @@ const Index = () => {
     studioName: 'PP STUDIO PERSONAL'
   });
   const [selectedCategory, setSelectedCategory] = useState<'A' | 'B' | 'C' | 'D' | 'E'>('A');
+  const [appConfig, setAppConfig] = useState({
+    logoUrl: '',
+    studioName: 'PP STUDIO PERSONAL',
+    primaryColor: '#192F59',
+    backgroundColor: '#f8fafc',
+    contactPhone: '',
+    contactEmail: '',
+    address: '',
+    storeLink: '',
+    welcomeMessage: 'Bem-vindo ao seu treino personalizado!'
+  });
 
   const handleAddExercise = (exercise: Exercise) => {
     setExercises([...exercises, exercise]);
@@ -34,6 +46,10 @@ const Index = () => {
 
   const handleUpdateBranding = (newBranding: BrandingConfig) => {
     setBranding(newBranding);
+  };
+
+  const handleUpdateAppConfig = (newConfig: any) => {
+    setAppConfig(newConfig);
   };
 
   // Group exercises by category
@@ -124,7 +140,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="pdf" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="pdf" className="flex items-center gap-1">
                       <FileText className="h-3 w-3" />
                       PDF
@@ -136,6 +152,10 @@ const Index = () => {
                     <TabsTrigger value="app" className="flex items-center gap-1">
                       <Smartphone className="h-3 w-3" />
                       App
+                    </TabsTrigger>
+                    <TabsTrigger value="customize" className="flex items-center gap-1">
+                      <Palette className="h-3 w-3" />
+                      Config
                     </TabsTrigger>
                   </TabsList>
                   
@@ -177,8 +197,16 @@ const Index = () => {
                         exercises={exercises}
                         branding={branding}
                         selectedCategory={selectedCategory}
+                        appConfig={appConfig}
                       />
                     </div>
+                  </TabsContent>
+
+                  <TabsContent value="customize" className="mt-4">
+                    <AppCustomization
+                      appConfig={appConfig}
+                      onUpdateConfig={handleUpdateAppConfig}
+                    />
                   </TabsContent>
                 </Tabs>
               </CardContent>
