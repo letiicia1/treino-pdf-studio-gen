@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Download } from "lucide-react";
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 interface PDFGeneratorProps {
@@ -16,6 +15,7 @@ interface PDFGeneratorProps {
   branding: BrandingConfig;
 }
 
+// Extend jsPDF type to include autoTable
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -52,7 +52,7 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
     
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text(`TREINO ${selectedCategory}`, 20, studentName ? 55 : 45);
+    doc.text(`TREINO ${selectedCategory}`, 20, studentName ? 52 : 42);
 
     // Table data
     const tableData = categoryExercises.map(exercise => [
@@ -64,29 +64,47 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
       exercise.notes || ''
     ]);
 
-    // Generate table
-    doc.autoTable({
+    // Generate table using autoTable from jsPDF
+    const autoTable = require('jspdf-autotable').default;
+    autoTable(doc, {
       head: [['Exercício', 'Vídeo', 'Séries', 'Repetições', 'Pausa', 'Observações']],
       body: tableData,
-      startY: studentName ? 65 : 55,
+      startY: studentName ? 60 : 50,
       styles: {
-        fontSize: 10,
-        cellPadding: 4,
+        fontSize: 11,
+        cellPadding: 5,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.5,
+        valign: 'middle',
+        halign: 'left'
       },
       headStyles: {
-        fillColor: [25, 47, 89],
+        fillColor: [70, 130, 180], // Azul mais claro para cabeçalho
         textColor: 255,
-        fontSize: 11,
+        fontSize: 12,
         fontStyle: 'bold',
+        halign: 'center'
+      },
+      bodyStyles: {
+        fillColor: [245, 245, 245]
+      },
+      alternateRowStyles: {
+        fillColor: [255, 255, 255]
       },
       columnStyles: {
-        0: { cellWidth: 40 },
-        1: { cellWidth: 35 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 20 },
+        0: { 
+          cellWidth: 35,
+          fillColor: [25, 47, 89], // Azul marinho para nomes dos exercícios
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 18, halign: 'center' },
+        3: { cellWidth: 25, halign: 'center' },
+        4: { cellWidth: 18, halign: 'center' },
         5: { cellWidth: 35 }
-      }
+      },
+      margin: { left: 15, right: 15 }
     });
 
     // General instructions
