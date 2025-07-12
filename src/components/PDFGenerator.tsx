@@ -8,18 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Download } from "lucide-react";
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 interface PDFGeneratorProps {
   exercises: Exercise[];
   branding: BrandingConfig;
-}
-
-// Extend jsPDF type to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
 }
 
 const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
@@ -64,15 +58,14 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
       exercise.notes || ''
     ]);
 
-    // Generate table using autoTable from jsPDF
-    const autoTable = require('jspdf-autotable').default;
+    // Generate table using autoTable
     autoTable(doc, {
       head: [['Exercício', 'Vídeo', 'Séries', 'Repetições', 'Pausa', 'Observações']],
       body: tableData,
       startY: studentName ? 60 : 50,
       styles: {
-        fontSize: 11,
-        cellPadding: 5,
+        fontSize: 12,
+        cellPadding: 6,
         lineColor: [200, 200, 200],
         lineWidth: 0.5,
         valign: 'middle',
@@ -81,12 +74,13 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
       headStyles: {
         fillColor: [70, 130, 180], // Azul mais claro para cabeçalho
         textColor: 255,
-        fontSize: 12,
+        fontSize: 13,
         fontStyle: 'bold',
         halign: 'center'
       },
       bodyStyles: {
-        fillColor: [245, 245, 245]
+        fillColor: [245, 245, 245],
+        fontSize: 11
       },
       alternateRowStyles: {
         fillColor: [255, 255, 255]
