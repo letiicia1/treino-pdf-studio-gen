@@ -72,82 +72,70 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
     doc.text(categoryText, categoryCenterX, currentY);
     currentY += 10;
 
-    // Preparar dados da tabela com links do vídeo
-    const tableData = categoryExercises.map(exercise => {
-      const exerciseName = exercise.name;
-      const videoText = exercise.videoLink ? 'Ver Vídeo' : '';
-      const exerciseCell = exercise.videoLink 
-        ? `${exerciseName}\n${videoText}`
-        : exerciseName;
-      
-      return [
-        exerciseCell,
-        exercise.series.toString(),
-        exercise.repetitions,
-        exercise.rest || '',
-        exercise.notes || ''
-      ];
-    });
+    // Preparar dados da tabela
+    const tableData = categoryExercises.map(exercise => [
+      exercise.name,
+      exercise.videoLink ? 'Ver Vídeo' : '',
+      exercise.series.toString(),
+      exercise.repetitions,
+      exercise.rest || '',
+      exercise.notes || ''
+    ]);
 
     // Gerar tabela usando autoTable
     autoTable(doc, {
-      head: [['Exercício', 'Séries', 'Repetições', 'Pausa', 'Observações']],
+      head: [['Exercício', 'Vídeo', 'S', 'Rep.', 'Pausa', 'Obs.']],
       body: tableData,
       startY: currentY,
       styles: {
-        fontSize: 11,
-        cellPadding: 4,
+        fontSize: 10,
+        cellPadding: 3,
         lineColor: [200, 200, 200],
         lineWidth: 0.5,
-        valign: 'top',
-        halign: 'left',
-        overflow: 'linebreak'
+        valign: 'middle',
+        halign: 'center'
       },
       headStyles: {
-        fillColor: [70, 130, 180],
-        textColor: 255,
-        fontSize: 12,
+        fillColor: [70, 130, 180], // Azul mais claro para o cabeçalho
+        textColor: [255, 255, 255], // Texto branco
+        fontSize: 11,
         fontStyle: 'bold',
         halign: 'center',
-        minCellHeight: 10
+        minCellHeight: 8
       },
       bodyStyles: {
-        fillColor: [245, 245, 245],
-        fontSize: 10,
-        minCellHeight: 15
+        fontSize: 9,
+        minCellHeight: 12
       },
       alternateRowStyles: {
-        fillColor: [255, 255, 255]
+        fillColor: [245, 245, 245]
       },
       columnStyles: {
         0: { 
-          cellWidth: 50,
-          fillColor: [25, 47, 89],
-          textColor: 255,
-          fontStyle: 'bold'
+          cellWidth: 55,
+          fillColor: [25, 47, 89], // Azul marinho para nomes dos exercícios
+          textColor: [255, 255, 255], // Texto branco
+          fontStyle: 'bold',
+          halign: 'left'
         },
-        1: { cellWidth: 20, halign: 'center' },
-        2: { cellWidth: 30, halign: 'center' },
-        3: { cellWidth: 20, halign: 'center' },
-        4: { cellWidth: 45 }
+        1: { 
+          cellWidth: 25, 
+          fillColor: [255, 255, 255], // Fundo branco para vídeo
+          textColor: [0, 0, 255], // Texto azul para link
+          halign: 'center'
+        },
+        2: { cellWidth: 15, halign: 'center' },
+        3: { cellWidth: 25, halign: 'center' },
+        4: { cellWidth: 20, halign: 'center' },
+        5: { cellWidth: 35, halign: 'left' }
       },
       margin: { left: 15, right: 15 },
-      didParseCell: function(data) {
-        // Adicionar links clicáveis para vídeos
-        if (data.column.index === 0 && data.row.index >= 0) {
-          const exercise = categoryExercises[data.row.index];
-          if (exercise?.videoLink) {
-            data.cell.styles.textColor = [0, 0, 255];
-          }
-        }
-      },
       didDrawCell: function(data) {
         // Adicionar links clicáveis para os vídeos
-        if (data.column.index === 0 && data.row.index >= 0) {
+        if (data.column.index === 1 && data.row.index >= 0) {
           const exercise = categoryExercises[data.row.index];
-          if (exercise?.videoLink) {
-            const linkY = data.cell.y + data.cell.height - 8;
-            doc.link(data.cell.x, linkY - 3, data.cell.width, 6, {
+          if (exercise?.videoLink && data.cell.text[0] === 'Ver Vídeo') {
+            doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, {
               url: exercise.videoLink
             });
           }
