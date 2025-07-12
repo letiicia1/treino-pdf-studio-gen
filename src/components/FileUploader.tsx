@@ -34,12 +34,16 @@ const FileUploader = ({ onImportExercises }: FileUploaderProps) => {
 
       for (let fileIndex = 0; fileIndex < selectedFiles.length; fileIndex++) {
         const file = selectedFiles[fileIndex];
-        const currentCategory = categories[fileIndex];
+        const currentCategory = categories[fileIndex]; // Garantir que cada arquivo tenha sua categoria
+
+        console.log(`Processando arquivo ${fileIndex + 1}: ${file.name} como Treino ${currentCategory}`);
 
         const data = await file.arrayBuffer();
         const workbook = XLSX.read(data);
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+
+        let exerciseCount = 0;
 
         for (const row of jsonData) {
           if (!row || row.length === 0) continue;
@@ -55,28 +59,45 @@ const FileUploader = ({ onImportExercises }: FileUploaderProps) => {
           }
 
           // Process exercise row
-          if (row.length >= 3) {
+          if (row.length >= 1 && firstCell) {
             const [name, videoLink, series, repetitions, rest, notes] = row;
             
-            if (name && String(name).trim()) {
-              allExercises.push({
-                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                name: String(name).trim(),
-                series: parseInt(String(series)) || 1,
-                repetitions: String(repetitions || '').trim(),
-                rest: String(rest || '').trim(),
-                videoLink: String(videoLink || '').trim(),
-                notes: String(notes || '').trim(),
-                category: currentCategory
-              });
-            }
+            const newExercise: Exercise = {
+              id: `${currentCategory}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              name: String(name).trim(),
+              series: parseInt(String(series)) || 1,
+              repetitions: String(repetitions || '').trim() || '10',
+              rest: String(rest || '').trim() || '60s',
+              videoLink: String(videoLink || '').trim(),
+              notes: String(notes || '').trim(),
+              category: currentCategory // Forçar a categoria correta
+            };
+
+            allExercises.push(newExercise);
+            exerciseCount++;
+            
+            console.log(`Adicionado exercício "${newExercise.name}" ao Treino ${currentCategory}`);
           }
         }
+
+        console.log(`Total de exercícios adicionados ao Treino ${currentCategory}: ${exerciseCount}`);
       }
+
+      console.log(`Total de exercícios processados: ${allExercises.length}`);
+      console.log('Exercícios por categoria:', {
+        A: allExercises.filter(ex => ex.category === 'A').length,
+        B: allExercises.filter(ex => ex.category === 'B').length,
+        C: allExercises.filter(ex => ex.category === 'C').length,
+        D: allExercises.filter(ex => ex.category === 'D').length,
+        E: allExercises.filter(ex => ex.category === 'E').length,
+      });
 
       if (allExercises.length > 0) {
         onImportExercises(allExercises);
         setSelectedFiles([]);
+        alert(`${allExercises.length} exercícios importados com sucesso!`);
+      } else {
+        alert('Nenhum exercício válido foi encontrado nos arquivos.');
       }
     } catch (error) {
       console.error('Erro ao processar arquivos:', error);
