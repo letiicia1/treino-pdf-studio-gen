@@ -2,17 +2,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dumbbell, FileText, Smartphone, Palette, Users, Archive } from "lucide-react";
+import { Dumbbell, FileText } from "lucide-react";
 import WorkoutForm from "@/components/WorkoutForm";
 import ExerciseList from "@/components/ExerciseList";
 import BrandingSettings from "@/components/BrandingSettings";
 import PDFGenerator from "@/components/PDFGenerator";
-import WorkoutApp from "@/components/WorkoutApp";
-import AppCustomization from "@/components/AppCustomization";
-import AppBuilder from "@/components/AppBuilder";
-import WorkoutLibrary from "@/components/WorkoutLibrary";
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 const Index = () => {
@@ -20,25 +14,14 @@ const Index = () => {
   const [branding, setBranding] = useState<BrandingConfig>({
     studioName: 'PP STUDIO PERSONAL'
   });
-  const [selectedCategory, setSelectedCategory] = useState<'A' | 'B' | 'C' | 'D' | 'E'>('A');
-  const [appConfig, setAppConfig] = useState({
-    logoUrl: '',
-    studioName: 'PP STUDIO PERSONAL',
-    primaryColor: '#192F59',
-    backgroundColor: '#f8fafc',
-    contactPhone: '',
-    contactEmail: '',
-    address: '',
-    storeLink: '',
-    welcomeMessage: 'Bem-vindo ao seu treino personalizado!'
-  });
 
   const handleAddExercise = (exercise: Exercise) => {
     setExercises([...exercises, exercise]);
   };
 
   const handleAddMultipleExercises = (newExercises: Exercise[]) => {
-    setExercises([...exercises, ...newExercises]);
+    // Substituir exercícios anteriores em vez de somar
+    setExercises(newExercises);
   };
 
   const handleRemoveExercise = (id: string) => {
@@ -47,14 +30,6 @@ const Index = () => {
 
   const handleUpdateBranding = (newBranding: BrandingConfig) => {
     setBranding(newBranding);
-  };
-
-  const handleUpdateAppConfig = (newConfig: any) => {
-    setAppConfig(newConfig);
-  };
-
-  const handleLoadWorkout = (newExercises: Exercise[]) => {
-    setExercises(newExercises);
   };
 
   // Group exercises by category
@@ -73,9 +48,9 @@ const Index = () => {
           <div className="flex items-center gap-3">
             <Dumbbell className="h-8 w-8" />
             <div>
-              <h1 className="text-3xl font-bold">Sistema de Fichas de Treino</h1>
+              <h1 className="text-3xl font-bold">PP STUDIO PERSONAL</h1>
               <p className="text-blue-100 mt-1">
-                Crie fichas profissionais em PDF e aplicativo interativo para seus alunos
+                Crie fichas profissionais em PDF para seus alunos
               </p>
             </div>
           </div>
@@ -83,40 +58,24 @@ const Index = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Status Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <Card className="border-l-4 border-l-blue-500">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {exercises.length}
-                </div>
-                <div className="text-sm text-muted-foreground">Total</div>
-              </div>
-            </CardContent>
-          </Card>
-          {['A', 'B', 'C', 'D', 'E'].map(category => (
-            <Card key={category} className="border-l-4 border-l-purple-500">
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {exercisesByCategory[category]?.length || 0}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Treino {category}</div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Coluna Principal - Formulário e Lista */}
           <div className="lg:col-span-2 space-y-6">
             {/* Formulário de Exercícios */}
-            <WorkoutForm 
-              onAddExercise={handleAddExercise}
-              onAddMultipleExercises={handleAddMultipleExercises}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Dumbbell className="h-5 w-5" />
+                  Nova Ficha de Treino em PDF
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <WorkoutForm 
+                  onAddExercise={handleAddExercise}
+                  onAddMultipleExercises={handleAddMultipleExercises}
+                />
+              </CardContent>
+            </Card>
 
             {/* Lista de Exercícios */}
             <ExerciseList
@@ -125,7 +84,7 @@ const Index = () => {
             />
           </div>
 
-          {/* Sidebar - Configurações e Geradores */}
+          {/* Sidebar - Configurações e Gerador */}
           <div className="space-y-6">
             {/* Personalização da Marca */}
             <BrandingSettings
@@ -135,111 +94,11 @@ const Index = () => {
 
             <Separator />
 
-            {/* Geradores */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Sistema Completo
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="pdf" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="pdf" className="flex items-center gap-1 text-xs">
-                      <FileText className="h-3 w-3" />
-                      PDF
-                    </TabsTrigger>
-                    <TabsTrigger value="app" className="flex items-center gap-1 text-xs">
-                      <Smartphone className="h-3 w-3" />
-                      App
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="pdf" className="mt-4">
-                    <PDFGenerator
-                      exercises={exercises}
-                      branding={branding}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="app" className="mt-4">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium">Selecionar Treino:</label>
-                        <Select 
-                          value={selectedCategory} 
-                          onValueChange={(value: 'A' | 'B' | 'C' | 'D' | 'E') => setSelectedCategory(value)}
-                        >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="A">Treino A</SelectItem>
-                            <SelectItem value="B">Treino B</SelectItem>
-                            <SelectItem value="C">Treino C</SelectItem>
-                            <SelectItem value="D">Treino D</SelectItem>
-                            <SelectItem value="E">Treino E</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <WorkoutApp
-                        exercises={exercises}
-                        branding={branding}
-                        selectedCategory={selectedCategory}
-                        appConfig={appConfig}
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-
-            {/* Seção de Gerenciamento */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Gerenciamento Avançado
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="customize" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="customize" className="flex items-center gap-1 text-xs">
-                      <Palette className="h-3 w-3" />
-                      Config
-                    </TabsTrigger>
-                    <TabsTrigger value="apps" className="flex items-center gap-1 text-xs">
-                      <Users className="h-3 w-3" />
-                      Apps
-                    </TabsTrigger>
-                    <TabsTrigger value="library" className="flex items-center gap-1 text-xs">
-                      <Archive className="h-3 w-3" />
-                      Biblioteca
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="customize" className="mt-4">
-                    <AppCustomization
-                      appConfig={appConfig}
-                      onUpdateConfig={handleUpdateAppConfig}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="apps" className="mt-4">
-                    <AppBuilder exercises={exercises} />
-                  </TabsContent>
-
-                  <TabsContent value="library" className="mt-4">
-                    <WorkoutLibrary 
-                      currentExercises={exercises}
-                      onLoadWorkout={handleLoadWorkout}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+            {/* Gerador de PDF */}
+            <PDFGenerator
+              exercises={exercises}
+              branding={branding}
+            />
           </div>
         </div>
 
@@ -249,7 +108,7 @@ const Index = () => {
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
               <FileText className="h-4 w-4" />
               <span className="text-sm">
-                Sistema Completo de Geração de Fichas de Treino e Aplicativos Interativos
+                PP STUDIO PERSONAL - Sistema de Geração de Fichas de Treino
               </span>
             </div>
           </CardContent>

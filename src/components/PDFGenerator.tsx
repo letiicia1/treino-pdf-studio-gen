@@ -30,7 +30,7 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
 
     const categoriesWithExercises = Object.keys(exercisesByCategory).filter(
       category => exercisesByCategory[category].length > 0
-    ).sort(); // Ordenar A, B, C, D, E
+    ).sort();
 
     if (categoriesWithExercises.length === 0) {
       alert('Adicione exercícios aos treinos primeiro.');
@@ -176,26 +176,16 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
     });
 
     // Salvar
-    const fileName = `ficha-treino-completa${studentName ? `-${studentName.replace(/\s+/g, '-')}` : ''}.pdf`;
+    const fileName = `ficha-treino${studentName ? `-${studentName.replace(/\s+/g, '-')}` : ''}.pdf`;
     doc.save(fileName);
   };
-
-  // Contar exercícios por categoria
-  const exercisesByCategory = exercises.reduce((acc, exercise) => {
-    const category = exercise.category || 'A';
-    if (!acc[category]) acc[category] = 0;
-    acc[category]++;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const totalCategories = Object.keys(exercisesByCategory).filter(cat => exercisesByCategory[cat] > 0).length;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Gerar PDF Completo
+          Gerar PDF
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -222,21 +212,8 @@ const PDFGenerator = ({ exercises, branding }: PDFGeneratorProps) => {
 
         <Button onClick={generatePDF} className="w-full" disabled={exercises.length === 0}>
           <Download className="h-4 w-4 mr-2" />
-          Gerar PDF Completo ({totalCategories} treino{totalCategories !== 1 ? 's' : ''})
+          {exercises.length === 0 ? 'Adicione exercícios primeiro' : 'Gerar PDF'}
         </Button>
-
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p className="font-medium">Treinos disponíveis:</p>
-          {Object.entries(exercisesByCategory)
-            .filter(([_, count]) => count > 0)
-            .sort()
-            .map(([category, count]) => (
-              <p key={category}>Treino {category}: {count} exercício{count !== 1 ? 's' : ''}</p>
-            ))}
-          {exercises.length === 0 && (
-            <p className="text-amber-600">Nenhum exercício adicionado ainda.</p>
-          )}
-        </div>
       </CardContent>
     </Card>
   );
