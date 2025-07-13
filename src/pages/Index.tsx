@@ -20,7 +20,7 @@ const Index = () => {
   };
 
   const handleAddMultipleExercises = (newExercises: Exercise[]) => {
-    setExercises(newExercises);
+    setExercises([...exercises, ...newExercises]);
   };
 
   const handleRemoveExercise = (id: string) => {
@@ -29,6 +29,10 @@ const Index = () => {
 
   const handleUpdateBranding = (newBranding: BrandingConfig) => {
     setBranding(newBranding);
+  };
+
+  const handleClearAllExercises = () => {
+    setExercises([]);
   };
 
   return (
@@ -50,9 +54,9 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Coluna Principal - Formulário e Lista */}
+          {/* Main Column - Form and List */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Formulário de Exercícios */}
+            {/* Exercise Form */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -68,16 +72,16 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Lista de Exercícios */}
+            {/* Exercise List */}
             <ExerciseList
               exercises={exercises}
               onRemoveExercise={handleRemoveExercise}
             />
           </div>
 
-          {/* Sidebar - Configurações e Gerador */}
+          {/* Sidebar - Settings and Generator */}
           <div className="space-y-6">
-            {/* Personalização da Marca */}
+            {/* Brand Customization */}
             <BrandingSettings
               branding={branding}
               onUpdateBranding={handleUpdateBranding}
@@ -85,10 +89,11 @@ const Index = () => {
 
             <Separator />
 
-            {/* Gerador de PDF */}
+            {/* PDF Generator */}
             <PDFGenerator
               exercises={exercises}
               branding={branding}
+              onClearExercises={handleClearAllExercises}
             />
           </div>
         </div>

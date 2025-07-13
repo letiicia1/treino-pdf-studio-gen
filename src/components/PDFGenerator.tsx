@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Trash2 } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Exercise, BrandingConfig } from "@/types/workout";
@@ -13,24 +13,25 @@ interface PDFGeneratorProps {
   exercises: Exercise[];
   branding: BrandingConfig;
   onDownload?: () => void;
+  onClearExercises?: () => void;
 }
 
-const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) => {
+const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDFGeneratorProps) => {
   const [generalInstructions, setGeneralInstructions] = useState('');
 
+  // Count exercises by category
+  const exercisesByCategory = exercises.reduce((acc, exercise) => {
+    const category = exercise.category || 'A';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(exercise);
+    return acc;
+  }, {} as Record<string, Exercise[]>);
+
+  const categoriesWithExercises = Object.keys(exercisesByCategory).filter(
+    category => exercisesByCategory[category].length > 0
+  ).sort();
+
   const generatePDF = () => {
-    // Agrupar exercícios por categoria
-    const exercisesByCategory = exercises.reduce((acc, exercise) => {
-      const category = exercise.category || 'A';
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(exercise);
-      return acc;
-    }, {} as Record<string, Exercise[]>);
-
-    const categoriesWithExercises = Object.keys(exercisesByCategory).filter(
-      category => exercisesByCategory[category].length > 0
-    ).sort();
-
     if (categoriesWithExercises.length === 0) {
       alert('Adicione exercícios aos treinos primeiro.');
       return;
@@ -39,7 +40,7 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
     const doc = new jsPDF();
     let isFirstPage = true;
 
-    // Gerar uma página para cada categoria que tem exercícios
+    // Generate a page for each category that has exercises
     categoriesWithExercises.forEach((category) => {
       const categoryExercises = exercisesByCategory[category];
       
@@ -48,18 +49,18 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
       }
       isFirstPage = false;
 
-      // Faixa azul marinho no topo
+      // Navy blue stripe at the top
       doc.setFillColor(25, 47, 89);
       doc.rect(0, 0, 210, 20, 'F');
       
-      // Nome do estúdio centralizado na faixa
+      // Studio name centered in the stripe
       doc.setFontSize(16);
       doc.setTextColor(255, 255, 255);
       const studioNameWidth = doc.getTextWidth(branding.studioName);
       const centerX = (210 - studioNameWidth) / 2;
       doc.text(branding.studioName, centerX, 13);
       
-      // Título FICHA DE TREINO centralizado
+      // Centered WORKOUT SHEET title
       doc.setFontSize(18);
       doc.setTextColor(25, 47, 89);
       const titleText = 'FICHA DE TREINO';
@@ -69,7 +70,7 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
       
       let currentY = 50;
       
-      // Categoria do treino centralizada
+      // Centered workout category
       doc.setFontSize(14);
       doc.setTextColor(25, 47, 89);
       const categoryText = `TREINO ${category}`;
@@ -78,7 +79,7 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
       doc.text(categoryText, categoryCenterX, currentY);
       currentY += 15;
 
-      // Preparar dados da tabela
+      // Prepare table data
       const tableData = categoryExercises.map(exercise => [
         exercise.name,
         exercise.videoLink ? 'Ver Vídeo' : '',
@@ -88,7 +89,7 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
         exercise.notes || ''
       ]);
 
-      // Gerar tabela usando autoTable
+      // Generate table using autoTable
       autoTable(doc, {
         head: [['Exercício', 'Vídeo', 'S', 'Rep.', 'Pausa', 'Obs.']],
         body: tableData,
@@ -137,7 +138,7 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
         },
         margin: { left: 15, right: 15 },
         didDrawCell: function(data) {
-          // Adicionar links clicáveis para os vídeos
+          // Add clickable links for videos
           if (data.column.index === 1 && data.row.index >= 0) {
             const exercise = categoryExercises[data.row.index];
             if (exercise?.videoLink && data.cell.text[0] === 'Ver Vídeo') {
@@ -149,7 +150,7 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
         }
       });
 
-      // Orientações gerais (apenas na primeira página)
+      // General instructions (only on the first page)
       if (category === categoriesWithExercises[0] && generalInstructions) {
         const finalY = (doc as any).lastAutoTable.finalY + 15;
         
@@ -164,7 +165,7 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
       }
     });
 
-    // Salvar
+    // Save
     const fileName = `ficha-treino-completa.pdf`;
     doc.save(fileName);
     
@@ -178,10 +179,31 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Gerar PDF
+          Gerar PDF Completo
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Exercise summary */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-semibold mb-2">Exercícios Adicionados:</h4>
+          {categoriesWithExercises.length > 0 ? (
+            <div className="grid grid-cols-5 gap-2 text-sm">
+              {['A', 'B', 'C', 'D', 'E'].map(category => (
+                <div key={category} className={`text-center p-2 rounded ${
+                  exercisesByCategory[category]?.length > 0 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-500'
+                }`}>
+                  <div className="font-semibold">Treino {category}</div>
+                  <div>{exercisesByCategory[category]?.length || 0} exercícios</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">Nenhum exercício adicionado ainda</p>
+          )}
+        </div>
+
         <div>
           <Label htmlFor="general-instructions">Orientações Gerais (opcional)</Label>
           <Textarea
@@ -193,10 +215,27 @@ const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) =>
           />
         </div>
 
-        <Button onClick={generatePDF} className="w-full" disabled={exercises.length === 0}>
-          <Download className="h-4 w-4 mr-2" />
-          {exercises.length === 0 ? 'Adicione exercícios primeiro' : 'Gerar PDF Completo'}
-        </Button>
+        <div className="space-y-2">
+          <Button 
+            onClick={generatePDF} 
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" 
+            disabled={exercises.length === 0}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {exercises.length === 0 ? 'Adicione exercícios primeiro' : `Gerar PDF Completo (${categoriesWithExercises.length} treinos)`}
+          </Button>
+
+          {exercises.length > 0 && onClearExercises && (
+            <Button 
+              onClick={onClearExercises} 
+              variant="outline"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Limpar Todos os Exercícios
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -61,15 +61,15 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="single" className="w-full">
+        <Tabs defaultValue="bulk" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="bulk" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Importar Treinos
+            </TabsTrigger>
             <TabsTrigger value="single" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Individual
-            </TabsTrigger>
-            <TabsTrigger value="bulk" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Em Lote
             </TabsTrigger>
             <TabsTrigger value="file" className="flex items-center gap-2">
               <FileSpreadsheet className="h-4 w-4" />
@@ -77,6 +77,10 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
             </TabsTrigger>
           </TabsList>
           
+          <TabsContent value="bulk" className="mt-6">
+            <BulkExerciseImport onImportExercises={handleBulkImport} />
+          </TabsContent>
+
           <TabsContent value="single" className="mt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -167,10 +171,6 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
                 Adicionar Exercício
               </Button>
             </form>
-          </TabsContent>
-          
-          <TabsContent value="bulk" className="mt-6">
-            <BulkExerciseImport onImportExercises={handleBulkImport} />
           </TabsContent>
 
           <TabsContent value="file" className="mt-6">
