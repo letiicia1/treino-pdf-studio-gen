@@ -1,3 +1,4 @@
+
 export interface Exercise {
   id: string;
   name: string;
@@ -10,10 +11,16 @@ export interface Exercise {
 }
 
 export interface WorkoutSheet {
+  id: string;
   title: string;
-  studentName: string;
+  studentName?: string;
+  gender: 'masculino' | 'feminino';
+  weeklyFrequency: number;
+  level: 'iniciante' | 'intermediario' | 'avancado';
+  objective?: string;
   exercises: Exercise[];
   createdAt: Date;
+  lastModified: Date;
 }
 
 export interface BrandingConfig {
