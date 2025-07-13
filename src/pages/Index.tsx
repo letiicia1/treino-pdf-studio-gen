@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dumbbell, FileText } from "lucide-react";
 import WorkoutForm from "@/components/WorkoutForm";
 import ExerciseList from "@/components/ExerciseList";
+import ExercisePreview from "@/components/ExercisePreview";
 import BrandingSettings from "@/components/BrandingSettings";
 import PDFGenerator from "@/components/PDFGenerator";
 import { Exercise, BrandingConfig } from "@/types/workout";
@@ -25,6 +26,12 @@ const Index = () => {
 
   const handleRemoveExercise = (id: string) => {
     setExercises(exercises.filter(ex => ex.id !== id));
+  };
+
+  const handleUpdateExerciseName = (id: string, newName: string) => {
+    setExercises(exercises.map(ex => 
+      ex.id === id ? { ...ex, name: newName } : ex
+    ));
   };
 
   const handleUpdateBranding = (newBranding: BrandingConfig) => {
@@ -71,6 +78,14 @@ const Index = () => {
                 />
               </CardContent>
             </Card>
+
+            {/* Exercise Preview */}
+            {exercises.length > 0 && (
+              <ExercisePreview
+                exercises={exercises}
+                onUpdateExercise={handleUpdateExerciseName}
+              />
+            )}
 
             {/* Exercise List */}
             <ExerciseList

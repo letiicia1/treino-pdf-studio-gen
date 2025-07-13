@@ -169,6 +169,14 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
     const fileName = `ficha-treino-completa.pdf`;
     doc.save(fileName);
     
+    // Clear exercises after generating PDF
+    if (onClearExercises) {
+      onClearExercises();
+    }
+    
+    // Clear general instructions
+    setGeneralInstructions('');
+    
     if (onDownload) {
       onDownload();
     }
