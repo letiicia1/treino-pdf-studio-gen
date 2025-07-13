@@ -1,27 +1,26 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText, Download } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Exercise, BrandingConfig, WorkoutSheet } from "@/types/workout";
+import { Exercise, BrandingConfig } from "@/types/workout";
 
 interface PDFGeneratorProps {
-  workout: WorkoutSheet;
+  exercises: Exercise[];
   branding: BrandingConfig;
   onDownload?: () => void;
 }
 
-const PDFGenerator = ({ workout, branding, onDownload }: PDFGeneratorProps) => {
+const PDFGenerator = ({ exercises, branding, onDownload }: PDFGeneratorProps) => {
   const [generalInstructions, setGeneralInstructions] = useState('');
 
   const generatePDF = () => {
     // Agrupar exercícios por categoria
-    const exercisesByCategory = workout.exercises.reduce((acc, exercise) => {
+    const exercisesByCategory = exercises.reduce((acc, exercise) => {
       const category = exercise.category || 'A';
       if (!acc[category]) acc[category] = [];
       acc[category].push(exercise);
@@ -40,7 +39,7 @@ const PDFGenerator = ({ workout, branding, onDownload }: PDFGeneratorProps) => {
     const doc = new jsPDF();
     let isFirstPage = true;
 
-    // Gerar uma página para cada categoria
+    // Gerar uma página para cada categoria que tem exercícios
     categoriesWithExercises.forEach((category) => {
       const categoryExercises = exercisesByCategory[category];
       
@@ -68,27 +67,7 @@ const PDFGenerator = ({ workout, branding, onDownload }: PDFGeneratorProps) => {
       const titleCenterX = (210 - titleWidth) / 2;
       doc.text(titleText, titleCenterX, 32);
       
-      let currentY = 45;
-      
-      // Informações do treino
-      if (workout.studentName) {
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        const studentText = `Aluno: ${workout.studentName}`;
-        const studentWidth = doc.getTextWidth(studentText);
-        const studentCenterX = (210 - studentWidth) / 2;
-        doc.text(studentText, studentCenterX, currentY);
-        currentY += 6;
-      }
-      
-      // Informações adicionais do treino em uma linha
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      const infoText = `${workout.gender.toUpperCase()} | ${workout.level.toUpperCase()} | ${workout.weeklyFrequency}x/semana`;
-      const infoWidth = doc.getTextWidth(infoText);
-      const infoCenterX = (210 - infoWidth) / 2;
-      doc.text(infoText, infoCenterX, currentY);
-      currentY += 8;
+      let currentY = 50;
       
       // Categoria do treino centralizada
       doc.setFontSize(14);
@@ -97,7 +76,7 @@ const PDFGenerator = ({ workout, branding, onDownload }: PDFGeneratorProps) => {
       const categoryWidth = doc.getTextWidth(categoryText);
       const categoryCenterX = (210 - categoryWidth) / 2;
       doc.text(categoryText, categoryCenterX, currentY);
-      currentY += 10;
+      currentY += 15;
 
       // Preparar dados da tabela
       const tableData = categoryExercises.map(exercise => [
@@ -170,37 +149,23 @@ const PDFGenerator = ({ workout, branding, onDownload }: PDFGeneratorProps) => {
         }
       });
 
-      // Orientações gerais e objetivo (apenas na primeira página)
-      if (category === categoriesWithExercises[0]) {
+      // Orientações gerais (apenas na primeira página)
+      if (category === categoriesWithExercises[0] && generalInstructions) {
         const finalY = (doc as any).lastAutoTable.finalY + 15;
         
-        if (workout.objective) {
-          doc.setFontSize(12);
-          doc.setTextColor(25, 47, 89);
-          doc.text('Objetivo:', 20, finalY);
-          
-          doc.setFontSize(10);
-          doc.setTextColor(0, 0, 0);
-          const splitObjective = doc.splitTextToSize(workout.objective, 170);
-          doc.text(splitObjective, 20, finalY + 8);
-        }
-
-        if (generalInstructions) {
-          const objectiveHeight = workout.objective ? 20 : 0;
-          doc.setFontSize(12);
-          doc.setTextColor(25, 47, 89);
-          doc.text('Orientações Gerais:', 20, finalY + objectiveHeight);
-          
-          doc.setFontSize(10);
-          doc.setTextColor(0, 0, 0);
-          const splitText = doc.splitTextToSize(generalInstructions, 170);
-          doc.text(splitText, 20, finalY + objectiveHeight + 8);
-        }
+        doc.setFontSize(12);
+        doc.setTextColor(25, 47, 89);
+        doc.text('Orientações Gerais:', 20, finalY);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        const splitText = doc.splitTextToSize(generalInstructions, 170);
+        doc.text(splitText, 20, finalY + 8);
       }
     });
 
     // Salvar
-    const fileName = `${workout.title.replace(/\s+/g, '-')}-treino.pdf`;
+    const fileName = `ficha-treino-completa.pdf`;
     doc.save(fileName);
     
     if (onDownload) {
@@ -228,9 +193,9 @@ const PDFGenerator = ({ workout, branding, onDownload }: PDFGeneratorProps) => {
           />
         </div>
 
-        <Button onClick={generatePDF} className="w-full" disabled={workout.exercises.length === 0}>
+        <Button onClick={generatePDF} className="w-full" disabled={exercises.length === 0}>
           <Download className="h-4 w-4 mr-2" />
-          {workout.exercises.length === 0 ? 'Adicione exercícios primeiro' : 'Gerar PDF'}
+          {exercises.length === 0 ? 'Adicione exercícios primeiro' : 'Gerar PDF Completo'}
         </Button>
       </CardContent>
     </Card>
