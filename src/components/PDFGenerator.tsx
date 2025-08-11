@@ -36,17 +36,20 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
     // Create Excel workbook
     const workbook = XLSX.utils.book_new();
     
-    // Prepare data for Excel
-    const excelData: any[] = [];
-    
-    // Add header row
-    excelData.push(['Treino', 'Exercício', 'Link do Vídeo', 'Série', 'Repetição', 'Pausa', 'Observação']);
-    
-    // Add exercises data
+    // Create a separate worksheet for each category
     categoriesWithExercises.forEach((category) => {
-      exercisesByCategory[category].forEach((exercise) => {
+      const categoryExercises = exercisesByCategory[category];
+      
+      // Prepare data for this category
+      const excelData: any[] = [];
+      
+      // Add header row
+      excelData.push(['#', 'Exercício', 'Link do Vídeo', 'Série', 'Repetição', 'Pausa', 'Observação']);
+      
+      // Add exercises data with numbering
+      categoryExercises.forEach((exercise, index) => {
         excelData.push([
-          `Treino ${category}`,
+          index + 1, // Exercise number
           exercise.name,
           exercise.videoLink || '',
           exercise.series.toString(),
@@ -55,24 +58,24 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
           exercise.notes || ''
         ]);
       });
+      
+      // Create worksheet for this category
+      const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+      
+      // Set column widths
+      worksheet['!cols'] = [
+        { width: 5 },   // #
+        { width: 40 },  // Exercício
+        { width: 50 },  // Link do Vídeo
+        { width: 10 },  // Série
+        { width: 15 },  // Repetição
+        { width: 15 },  // Pausa
+        { width: 30 }   // Observação
+      ];
+      
+      // Add worksheet to workbook with category name
+      XLSX.utils.book_append_sheet(workbook, worksheet, `Treino ${category}`);
     });
-    
-    // Create worksheet
-    const worksheet = XLSX.utils.aoa_to_sheet(excelData);
-    
-    // Set column widths
-    worksheet['!cols'] = [
-      { width: 10 },  // Treino
-      { width: 40 },  // Exercício
-      { width: 50 },  // Link do Vídeo
-      { width: 10 },  // Série
-      { width: 15 },  // Repetição
-      { width: 15 },  // Pausa
-      { width: 30 }   // Observação
-    ];
-    
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Treinos');
     
     // Save Excel file
     XLSX.writeFile(workbook, 'ficha-treino-completa.xlsx');
