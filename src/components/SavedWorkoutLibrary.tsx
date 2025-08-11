@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Archive, Download, Eye, Trash2, Plus, FileText, Edit } from "lucide-react";
+import { Archive, Download, Eye, Trash2, Plus, FileText, Edit, FileSpreadsheet, Pencil } from "lucide-react";
 import { SavedWorkout, Exercise, BrandingConfig } from "@/types/workout";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -35,6 +35,8 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [editingHeader, setEditingHeader] = useState<SavedWorkout | null>(null);
   const [headerText, setHeaderText] = useState('');
+  const [editingWorkout, setEditingWorkout] = useState<SavedWorkout | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   const handleSaveWorkout = () => {
     if (!saveForm.name || currentExercises.length === 0) {
@@ -301,9 +303,25 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
   const handleDownloadWithCustomHeader = () => {
     if (editingHeader) {
       generateWorkoutPDF(editingHeader, headerText);
-      generateWorkoutExcel(editingHeader);
       setEditingHeader(null);
       setHeaderText('');
+    }
+  };
+
+  const openNameEditor = (workout: SavedWorkout) => {
+    setEditingWorkout(workout);
+    setEditingName(workout.name);
+  };
+
+  const handleSaveEditedName = () => {
+    if (editingWorkout && editingName.trim()) {
+      setSavedWorkouts(savedWorkouts.map(w => 
+        w.id === editingWorkout.id 
+          ? { ...w, name: editingName.trim(), lastModified: new Date() }
+          : w
+      ));
+      setEditingWorkout(null);
+      setEditingName('');
     }
   };
 
@@ -482,7 +500,24 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold">{workout.name}</h4>
+                            {editingWorkout?.id === workout.id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={editingName}
+                                  onChange={(e) => setEditingName(e.target.value)}
+                                  className="h-8 text-sm font-semibold"
+                                  onKeyPress={(e) => e.key === 'Enter' && handleSaveEditedName()}
+                                />
+                                <Button size="sm" onClick={handleSaveEditedName}>
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => setEditingWorkout(null)}>
+                                  ✕
+                                </Button>
+                              </div>
+                            ) : (
+                              <h4 className="font-semibold">{workout.name}</h4>
+                            )}
                             <Badge className={getGenderBadgeColor(workout.gender)}>
                               {workout.gender}
                             </Badge>
@@ -510,6 +545,15 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                             Carregar
                           </Button>
                           
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openNameEditor(workout)}
+                          >
+                            <Pencil className="h-3 w-3 mr-1" />
+                            Editar Nome
+                          </Button>
+                          
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button
@@ -517,13 +561,13 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                                 variant="default"
                                 onClick={() => openHeaderEditor(workout)}
                               >
-                                <Download className="h-3 w-3 mr-1" />
-                                PDF/Excel
+                                <FileText className="h-3 w-3 mr-1" />
+                                PDF
                               </Button>
                             </DialogTrigger>
                             <DialogContent>
                               <DialogHeader>
-                                <DialogTitle>Personalizar e Baixar</DialogTitle>
+                                <DialogTitle>Personalizar PDF</DialogTitle>
                               </DialogHeader>
                               <div className="space-y-4">
                                 <div>
@@ -537,13 +581,22 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                                 </div>
                                 <div className="flex gap-2">
                                   <Button onClick={handleDownloadWithCustomHeader} className="flex-1">
-                                    <Download className="h-4 w-4 mr-2" />
-                                    Baixar PDF + Excel
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Baixar PDF
                                   </Button>
                                 </div>
                               </div>
                             </DialogContent>
                           </Dialog>
+                          
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => generateWorkoutExcel(workout)}
+                          >
+                            <FileSpreadsheet className="h-3 w-3 mr-1" />
+                            Excel
+                          </Button>
                           
                           <Button
                             size="sm"
@@ -581,8 +634,11 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                         <Button size="sm" variant="outline" onClick={() => handleLoadWorkout(workout)}>
                           <Eye className="h-3 w-3 mr-1" />Carregar
                         </Button>
-                        <Button size="sm" onClick={() => { generateWorkoutPDF(workout); generateWorkoutExcel(workout); }}>
-                          <Download className="h-3 w-3" />
+                        <Button size="sm" variant="default" onClick={() => generateWorkoutPDF(workout)}>
+                          <FileText className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => generateWorkoutExcel(workout)}>
+                          <FileSpreadsheet className="h-3 w-3" />
                         </Button>
                         <Button size="sm" variant="destructive" onClick={() => handleDeleteWorkout(workout.id)}>
                           <Trash2 className="h-3 w-3" />
@@ -615,8 +671,11 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                         <Button size="sm" variant="outline" onClick={() => handleLoadWorkout(workout)}>
                           <Eye className="h-3 w-3 mr-1" />Carregar
                         </Button>
-                        <Button size="sm" onClick={() => { generateWorkoutPDF(workout); generateWorkoutExcel(workout); }}>
-                          <Download className="h-3 w-3" />
+                        <Button size="sm" variant="default" onClick={() => generateWorkoutPDF(workout)}>
+                          <FileText className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => generateWorkoutExcel(workout)}>
+                          <FileSpreadsheet className="h-3 w-3" />
                         </Button>
                         <Button size="sm" variant="destructive" onClick={() => handleDeleteWorkout(workout.id)}>
                           <Trash2 className="h-3 w-3" />
@@ -658,8 +717,11 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                             <Button size="sm" variant="outline" onClick={() => handleLoadWorkout(workout)}>
                               Carregar
                             </Button>
-                            <Button size="sm" onClick={() => { generateWorkoutPDF(workout); generateWorkoutExcel(workout); }}>
-                              <Download className="h-3 w-3" />
+                            <Button size="sm" variant="default" onClick={() => generateWorkoutPDF(workout)}>
+                              <FileText className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="secondary" onClick={() => generateWorkoutExcel(workout)}>
+                              <FileSpreadsheet className="h-3 w-3" />
                             </Button>
                             <Button size="sm" variant="destructive" onClick={() => handleDeleteWorkout(workout.id)}>
                               <Trash2 className="h-3 w-3" />
@@ -675,6 +737,34 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
           </Tabs>
         </CardContent>
       </Card>
+      
+      {/* Dialog para editar nome do treino */}
+      <Dialog open={editingWorkout !== null} onOpenChange={(open) => !open && setEditingWorkout(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Nome do Treino</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-name">Nome do Treino</Label>
+              <Input
+                id="edit-name"
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                placeholder="Digite o novo nome do treino"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSaveEditedName} className="flex-1">
+                Salvar
+              </Button>
+              <Button variant="outline" onClick={() => setEditingWorkout(null)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
