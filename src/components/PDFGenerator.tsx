@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileText, Download, Trash2 } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 interface PDFGeneratorProps {
@@ -30,6 +31,52 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
   const categoriesWithExercises = Object.keys(exercisesByCategory).filter(
     category => exercisesByCategory[category].length > 0
   ).sort();
+
+  const generateExcel = () => {
+    // Create Excel workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Prepare data for Excel
+    const excelData: any[] = [];
+    
+    // Add header row
+    excelData.push(['Treino', 'Exercício', 'Link do Vídeo', 'Série', 'Repetição', 'Pausa', 'Observação']);
+    
+    // Add exercises data
+    categoriesWithExercises.forEach((category) => {
+      exercisesByCategory[category].forEach((exercise) => {
+        excelData.push([
+          `Treino ${category}`,
+          exercise.name,
+          exercise.videoLink || '',
+          exercise.series.toString(),
+          exercise.repetitions,
+          exercise.rest || '',
+          exercise.notes || ''
+        ]);
+      });
+    });
+    
+    // Create worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+    
+    // Set column widths
+    worksheet['!cols'] = [
+      { width: 10 },  // Treino
+      { width: 40 },  // Exercício
+      { width: 50 },  // Link do Vídeo
+      { width: 10 },  // Série
+      { width: 15 },  // Repetição
+      { width: 15 },  // Pausa
+      { width: 30 }   // Observação
+    ];
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Treinos');
+    
+    // Save Excel file
+    XLSX.writeFile(workbook, 'ficha-treino-completa.xlsx');
+  };
 
   const generatePDF = () => {
     if (categoriesWithExercises.length === 0) {
@@ -165,11 +212,14 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
       }
     });
 
-    // Save
+    // Save PDF
     const fileName = `ficha-treino-completa.pdf`;
     doc.save(fileName);
     
-    // Clear exercises after generating PDF
+    // Generate Excel file
+    generateExcel();
+    
+    // Clear exercises after generating files
     if (onClearExercises) {
       onClearExercises();
     }
