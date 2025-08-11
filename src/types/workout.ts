@@ -17,8 +17,26 @@ export interface WorkoutSheet {
   gender: 'masculino' | 'feminino';
   weeklyFrequency: number;
   level: 'iniciante' | 'intermediario' | 'avancado';
+  subLevel: 1 | 2 | 3;
+  levelComplement?: string;
   objective?: string;
   exercises: Exercise[];
+  createdAt: Date;
+  lastModified: Date;
+}
+
+export interface SavedWorkout {
+  id: string;
+  name: string;
+  gender: 'masculino' | 'feminino';
+  weeklyFrequency: number;
+  level: 'iniciante' | 'intermediario' | 'avancado';
+  subLevel: 1 | 2 | 3;
+  levelComplement?: string;
+  objective?: string;
+  exercises: Exercise[];
+  categories: string[];
+  headerText?: string;
   createdAt: Date;
   lastModified: Date;
 }

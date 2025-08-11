@@ -21,6 +21,8 @@ const WorkoutRegistration = ({ onCreateWorkout, currentWorkout }: WorkoutRegistr
     gender: currentWorkout?.gender || 'masculino' as 'masculino' | 'feminino',
     weeklyFrequency: currentWorkout?.weeklyFrequency || 3,
     level: currentWorkout?.level || 'iniciante' as 'iniciante' | 'intermediario' | 'avancado',
+    subLevel: currentWorkout?.subLevel || 1 as 1 | 2 | 3,
+    levelComplement: currentWorkout?.levelComplement || '',
     objective: currentWorkout?.objective || ''
   });
 
@@ -121,6 +123,33 @@ const WorkoutRegistration = ({ onCreateWorkout, currentWorkout }: WorkoutRegistr
                   <SelectItem value="avancado">Avançado</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="sublevel">Sub-nível</Label>
+              <Select 
+                value={formData.subLevel.toString()} 
+                onValueChange={(value: string) => handleInputChange('subLevel', parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Nível 1</SelectItem>
+                  <SelectItem value="2">Nível 2</SelectItem>
+                  <SelectItem value="3">Nível 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="level-complement">Complemento do Nível</Label>
+              <Input
+                id="level-complement"
+                value={formData.levelComplement}
+                onChange={(e) => handleInputChange('levelComplement', e.target.value)}
+                placeholder="Ex: com foco em glúteos"
+              />
             </div>
           </div>
 

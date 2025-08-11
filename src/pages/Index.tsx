@@ -8,6 +8,7 @@ import ExerciseList from "@/components/ExerciseList";
 import ExercisePreview from "@/components/ExercisePreview";
 import BrandingSettings from "@/components/BrandingSettings";
 import PDFGenerator from "@/components/PDFGenerator";
+import SavedWorkoutLibrary from "@/components/SavedWorkoutLibrary";
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 const Index = () => {
@@ -40,6 +41,10 @@ const Index = () => {
 
   const handleClearAllExercises = () => {
     setExercises([]);
+  };
+
+  const handleLoadWorkout = (workoutExercises: Exercise[]) => {
+    setExercises(workoutExercises);
   };
 
   return (
@@ -112,6 +117,13 @@ const Index = () => {
             />
           </div>
         </div>
+
+        {/* Saved Workout Library */}
+        <SavedWorkoutLibrary
+          currentExercises={exercises}
+          branding={branding}
+          onLoadWorkout={handleLoadWorkout}
+        />
 
         {/* Footer */}
         <Card className="bg-gradient-to-r from-gray-50 to-gray-100 border-t">
