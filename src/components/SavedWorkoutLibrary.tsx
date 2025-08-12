@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Archive, Download, Eye, Trash2, Plus, FileText, Edit, FileSpreadsheet, Pencil } from "lucide-react";
 import { SavedWorkout, Exercise, BrandingConfig } from "@/types/workout";
+import { supabase } from "@/integrations/supabase/client";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -22,6 +23,7 @@ interface SavedWorkoutLibraryProps {
 
 const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: SavedWorkoutLibraryProps) => {
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
+  const [loading, setLoading] = useState(false);
   const [saveForm, setSaveForm] = useState({
     name: '',
     gender: 'masculino' as 'masculino' | 'feminino',
@@ -38,43 +40,107 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
   const [editingWorkout, setEditingWorkout] = useState<SavedWorkout | null>(null);
   const [editingName, setEditingName] = useState('');
 
-  const handleSaveWorkout = () => {
+  // Load workouts from Supabase on component mount
+  useEffect(() => {
+    loadWorkouts();
+  }, []);
+
+  const loadWorkouts = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('ready_workouts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const workouts: SavedWorkout[] = data.map(workout => {
+          let exercises: Exercise[] = [];
+          try {
+            if (Array.isArray(workout.workout_data)) {
+              exercises = workout.workout_data as unknown as Exercise[];
+            }
+          } catch (error) {
+            console.error('Error parsing workout data:', error);
+          }
+
+          const categories = [...new Set(exercises.map(ex => ex.category))];
+
+          return {
+            id: workout.id,
+            name: workout.name,
+            gender: workout.category as 'masculino' | 'feminino',
+            weeklyFrequency: workout.weekly_frequency || 3,
+            level: workout.level_category as 'iniciante' | 'intermediario' | 'avancado',
+            subLevel: workout.level_number as 1 | 2 | 3,
+            levelComplement: workout.level_complement || '',
+            objective: '',
+            headerText: '',
+            exercises,
+            categories: categories.sort(),
+            createdAt: new Date(workout.created_at),
+            lastModified: new Date(workout.updated_at)
+          };
+        });
+        setSavedWorkouts(workouts);
+      }
+    } catch (error) {
+      console.error('Error loading workouts:', error);
+      alert('Erro ao carregar treinos salvos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveWorkout = async () => {
     if (!saveForm.name || currentExercises.length === 0) {
       alert('Preencha o nome e adicione exercícios antes de salvar.');
       return;
     }
 
-    const categories = [...new Set(currentExercises.map(ex => ex.category))];
+    setLoading(true);
     
-    const newWorkout: SavedWorkout = {
-      id: Date.now().toString(),
-      name: saveForm.name,
-      gender: saveForm.gender,
-      weeklyFrequency: saveForm.weeklyFrequency,
-      level: saveForm.level,
-      subLevel: saveForm.subLevel,
-      levelComplement: saveForm.levelComplement,
-      objective: saveForm.objective,
-      headerText: saveForm.headerText,
-      exercises: [...currentExercises],
-      categories: categories.sort(),
-      createdAt: new Date(),
-      lastModified: new Date()
-    };
+    try {
+      const { data, error } = await supabase
+        .from('ready_workouts')
+        .insert({
+          name: saveForm.name,
+          category: saveForm.gender,
+          weekly_frequency: saveForm.weeklyFrequency,
+          level_category: saveForm.level,
+          level_number: saveForm.subLevel,
+          level_complement: saveForm.levelComplement,
+          workout_data: currentExercises as any,
+          student_name: null
+        })
+        .select()
+        .single();
 
-    setSavedWorkouts([...savedWorkouts, newWorkout]);
-    setSaveForm({ 
-      name: '', 
-      gender: 'masculino', 
-      weeklyFrequency: 3,
-      level: 'iniciante', 
-      subLevel: 1,
-      levelComplement: '',
-      objective: '',
-      headerText: ''
-    });
-    setShowSaveForm(false);
-    alert('Treino salvo com sucesso!');
+      if (error) throw error;
+
+      // Reload workouts to get the latest data
+      await loadWorkouts();
+      
+      setSaveForm({ 
+        name: '', 
+        gender: 'masculino', 
+        weeklyFrequency: 3,
+        level: 'iniciante', 
+        subLevel: 1,
+        levelComplement: '',
+        objective: '',
+        headerText: ''
+      });
+      setShowSaveForm(false);
+      alert('Treino salvo com sucesso!');
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      alert('Erro ao salvar treino');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLoadWorkout = (workout: SavedWorkout) => {
@@ -82,9 +148,25 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
     alert(`Treino "${workout.name}" carregado com sucesso!`);
   };
 
-  const handleDeleteWorkout = (id: string) => {
+  const handleDeleteWorkout = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir este treino?')) {
-      setSavedWorkouts(savedWorkouts.filter(w => w.id !== id));
+      setLoading(true);
+      try {
+        const { error } = await supabase
+          .from('ready_workouts')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+
+        setSavedWorkouts(savedWorkouts.filter(w => w.id !== id));
+        alert('Treino excluído com sucesso!');
+      } catch (error) {
+        console.error('Error deleting workout:', error);
+        alert('Erro ao excluir treino');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -313,15 +395,31 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
     setEditingName(workout.name);
   };
 
-  const handleSaveEditedName = () => {
+  const handleSaveEditedName = async () => {
     if (editingWorkout && editingName.trim()) {
-      setSavedWorkouts(savedWorkouts.map(w => 
-        w.id === editingWorkout.id 
-          ? { ...w, name: editingName.trim(), lastModified: new Date() }
-          : w
-      ));
-      setEditingWorkout(null);
-      setEditingName('');
+      setLoading(true);
+      try {
+        const { error } = await supabase
+          .from('ready_workouts')
+          .update({ name: editingName.trim() })
+          .eq('id', editingWorkout.id);
+
+        if (error) throw error;
+
+        setSavedWorkouts(savedWorkouts.map(w => 
+          w.id === editingWorkout.id 
+            ? { ...w, name: editingName.trim(), lastModified: new Date() }
+            : w
+        ));
+        setEditingWorkout(null);
+        setEditingName('');
+        alert('Nome do treino atualizado com sucesso!');
+      } catch (error) {
+        console.error('Error updating workout name:', error);
+        alert('Erro ao atualizar nome do treino');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -339,11 +437,11 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
           <div className="mb-6">
             <Button
               onClick={() => setShowSaveForm(!showSaveForm)}
-              disabled={currentExercises.length === 0}
+              disabled={currentExercises.length === 0 || loading}
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Salvar Treino Atual
+              {loading ? 'Salvando...' : 'Salvar Treino Atual'}
             </Button>
           </div>
 
@@ -466,10 +564,10 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button onClick={handleSaveWorkout} className="flex-1">
-                    Salvar Treino
+                  <Button onClick={handleSaveWorkout} className="flex-1" disabled={loading}>
+                    {loading ? 'Salvando...' : 'Salvar Treino'}
                   </Button>
-                  <Button variant="outline" onClick={() => setShowSaveForm(false)}>
+                  <Button variant="outline" onClick={() => setShowSaveForm(false)} disabled={loading}>
                     Cancelar
                   </Button>
                 </div>

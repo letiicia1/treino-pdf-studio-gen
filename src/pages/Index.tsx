@@ -8,7 +8,7 @@ import ExerciseList from "@/components/ExerciseList";
 import ExercisePreview from "@/components/ExercisePreview";
 import BrandingSettings from "@/components/BrandingSettings";
 import PDFGenerator from "@/components/PDFGenerator";
-import SavedWorkoutLibrary from "@/components/SavedWorkoutLibrary";
+import SavedWorkoutLibraryButton from "@/components/SavedWorkoutLibraryButton";
 import { Exercise, BrandingConfig } from "@/types/workout";
 
 const Index = () => {
@@ -71,9 +71,18 @@ const Index = () => {
             {/* Exercise Form */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Dumbbell className="h-5 w-5" />
-                  Nova Ficha de Treino em PDF
+                <CardTitle className="flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2">
+                    <Dumbbell className="h-5 w-5" />
+                    Nova Ficha de Treino em PDF
+                  </div>
+                  <div className="flex-shrink-0">
+                    <SavedWorkoutLibraryButton
+                      currentExercises={exercises}
+                      branding={branding}
+                      onLoadWorkout={handleLoadWorkout}
+                    />
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -118,12 +127,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Saved Workout Library */}
-        <SavedWorkoutLibrary
-          currentExercises={exercises}
-          branding={branding}
-          onLoadWorkout={handleLoadWorkout}
-        />
 
         {/* Footer */}
         <Card className="bg-gradient-to-r from-gray-50 to-gray-100 border-t">
