@@ -39,6 +39,7 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
   const [headerText, setHeaderText] = useState('');
   const [editingWorkout, setEditingWorkout] = useState<SavedWorkout | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [viewingWorkout, setViewingWorkout] = useState<SavedWorkout | null>(null);
 
   // Load workouts from Supabase on component mount
   useEffect(() => {
@@ -207,24 +208,12 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
       // Custom header or default
       doc.setFontSize(18);
       doc.setTextColor(25, 47, 89);
-      const titleText = customHeader || workout.headerText || 'FICHA DE TREINO';
+      const titleText = customHeader || 'FICHA DE TREINO';
       const titleWidth = doc.getTextWidth(titleText);
       const titleCenterX = (210 - titleWidth) / 2;
       doc.text(titleText, titleCenterX, 32);
       
-      let currentY = 45;
-      
-      // Workout info
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Nome: ${workout.name}`, 20, currentY);
-      currentY += 6;
-      doc.text(`Gênero: ${workout.gender} | Frequência: ${workout.weeklyFrequency}x/semana | Nível: ${workout.level} ${workout.subLevel}`, 20, currentY);
-      if (workout.levelComplement) {
-        currentY += 6;
-        doc.text(`Complemento: ${workout.levelComplement}`, 20, currentY);
-      }
-      currentY += 10;
+      let currentY = 50;
       
       // Centered workout category
       doc.setFontSize(14);
@@ -297,7 +286,7 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
     });
 
     // Save PDF
-    const fileName = `ficha-treino.pdf`;
+    const fileName = `ficha-treino-${workout.weeklyFrequency}x-semana.pdf`;
     doc.save(fileName);
   };
 
@@ -636,12 +625,68 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                         </div>
                         
                         <div className="flex gap-2 flex-wrap">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setViewingWorkout(workout)}
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                Ver Exercícios
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Exercícios - {workout.name}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                {workout.categories.map(category => (
+                                  <div key={category} className="border rounded-lg p-4">
+                                    <h3 className="font-semibold text-lg mb-3 text-center bg-primary text-primary-foreground py-2 rounded">
+                                      TREINO {category}
+                                    </h3>
+                                    <div className="space-y-2">
+                                      {workout.exercises
+                                        .filter(ex => ex.category === category)
+                                        .map((exercise, index) => (
+                                          <div key={exercise.id} className="border-b pb-2 last:border-b-0">
+                                            <div className="grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
+                                              <div className="md:col-span-2 font-medium">{exercise.name}</div>
+                                              <div className="text-center">
+                                                <span className="font-medium">{exercise.series}</span> séries
+                                              </div>
+                                              <div className="text-center">{exercise.repetitions}</div>
+                                              <div className="text-center">{exercise.rest || '-'}</div>
+                                              <div className="text-xs">{exercise.notes || '-'}</div>
+                                            </div>
+                                            {exercise.videoLink && (
+                                              <div className="mt-1">
+                                                <a 
+                                                  href={exercise.videoLink} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:underline text-xs"
+                                                >
+                                                  Ver vídeo
+                                                </a>
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleLoadWorkout(workout)}
                           >
-                            <Eye className="h-3 w-3 mr-1" />
+                            <Download className="h-3 w-3 mr-1" />
                             Carregar
                           </Button>
                           
