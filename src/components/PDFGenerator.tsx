@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText, Download, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -13,11 +14,13 @@ import { Exercise, BrandingConfig } from "@/types/workout";
 interface PDFGeneratorProps {
   exercises: Exercise[];
   branding: BrandingConfig;
+  weeklyFrequency?: number;
+  onWeeklyFrequencyChange?: (frequency: number) => void;
   onDownload?: () => void;
   onClearExercises?: () => void;
 }
 
-const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDFGeneratorProps) => {
+const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFrequencyChange, onDownload, onClearExercises }: PDFGeneratorProps) => {
   const [generalInstructions, setGeneralInstructions] = useState('');
 
   // Count exercises by category
@@ -118,7 +121,14 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
       const titleCenterX = (210 - titleWidth) / 2;
       doc.text(titleText, titleCenterX, 32);
       
-      let currentY = 50;
+      // Weekly frequency below title
+      doc.setFontSize(12);
+      const frequencyText = `${weeklyFrequency}x por semana`;
+      const frequencyWidth = doc.getTextWidth(frequencyText);
+      const frequencyCenterX = (210 - frequencyWidth) / 2;
+      doc.text(frequencyText, frequencyCenterX, 42);
+      
+      let currentY = 60;
       
       // Centered workout category
       doc.setFontSize(14);
@@ -216,7 +226,7 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
     });
 
     // Save PDF
-    const fileName = `ficha-treino.pdf`;
+    const fileName = `ficha-treino-${weeklyFrequency}x-semana.pdf`;
     doc.save(fileName);
     
     // Generate Excel file
@@ -263,6 +273,27 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
           ) : (
             <p className="text-gray-500 text-sm">Nenhum exercício adicionado ainda</p>
           )}
+        </div>
+
+        <div>
+          <Label htmlFor="weekly-frequency">Frequência Semanal</Label>
+          <Select 
+            value={weeklyFrequency.toString()} 
+            onValueChange={(value) => onWeeklyFrequencyChange?.(parseInt(value))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a frequência" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1x por semana</SelectItem>
+              <SelectItem value="2">2x por semana</SelectItem>
+              <SelectItem value="3">3x por semana</SelectItem>
+              <SelectItem value="4">4x por semana</SelectItem>
+              <SelectItem value="5">5x por semana</SelectItem>
+              <SelectItem value="6">6x por semana</SelectItem>
+              <SelectItem value="7">7x por semana</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div>

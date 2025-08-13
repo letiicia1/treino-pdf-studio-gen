@@ -13,6 +13,7 @@ import { Exercise, BrandingConfig } from "@/types/workout";
 
 const Index = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [weeklyFrequency, setWeeklyFrequency] = useState<number>(3);
   const [branding, setBranding] = useState<BrandingConfig>({
     studioName: 'PP STUDIO PERSONAL'
   });
@@ -45,6 +46,10 @@ const Index = () => {
 
   const handleLoadWorkout = (workoutExercises: Exercise[]) => {
     setExercises(workoutExercises);
+  };
+
+  const handleWeeklyFrequencyChange = (frequency: number) => {
+    setWeeklyFrequency(frequency);
   };
 
   return (
@@ -122,6 +127,8 @@ const Index = () => {
             <PDFGenerator
               exercises={exercises}
               branding={branding}
+              weeklyFrequency={weeklyFrequency}
+              onWeeklyFrequencyChange={handleWeeklyFrequencyChange}
               onClearExercises={handleClearAllExercises}
             />
           </div>
