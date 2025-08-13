@@ -78,7 +78,7 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
     });
     
     // Save Excel file
-    XLSX.writeFile(workbook, 'ficha-treino-completa.xlsx');
+    XLSX.writeFile(workbook, 'planilha-treino.xlsx');
   };
 
   const generatePDF = () => {
@@ -216,7 +216,7 @@ const PDFGenerator = ({ exercises, branding, onDownload, onClearExercises }: PDF
     });
 
     // Save PDF
-    const fileName = `ficha-treino-completa.pdf`;
+    const fileName = `ficha-treino.pdf`;
     doc.save(fileName);
     
     // Generate Excel file

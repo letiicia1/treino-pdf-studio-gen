@@ -297,7 +297,7 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
     });
 
     // Save PDF
-    const fileName = `${workout.name.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+    const fileName = `ficha-treino.pdf`;
     doc.save(fileName);
   };
 
@@ -351,7 +351,9 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
       XLSX.utils.book_append_sheet(workbook, worksheet, `Treino ${category}`);
     });
     
-    XLSX.writeFile(workbook, `${workout.name.replace(/\s+/g, '-').toLowerCase()}.xlsx`);
+    const levelText = `${workout.level}-${workout.subLevel}`;
+    const fileName = `planilha-${levelText}-${workout.weeklyFrequency}x-semana.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   const filterWorkouts = (gender?: string, level?: string) => {
