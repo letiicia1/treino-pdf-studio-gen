@@ -208,7 +208,7 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
       // Custom header or default
       doc.setFontSize(18);
       doc.setTextColor(25, 47, 89);
-      const titleText = customHeader || 'FICHA DE TREINO';
+      const titleText = 'FICHA DE TREINO';
       const titleWidth = doc.getTextWidth(titleText);
       const titleCenterX = (210 - titleWidth) / 2;
       doc.text(titleText, titleCenterX, 32);
@@ -643,38 +643,52 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                               <div className="space-y-4">
                                 {workout.categories.map(category => (
                                   <div key={category} className="border rounded-lg p-4">
-                                    <h3 className="font-semibold text-lg mb-3 text-center bg-primary text-primary-foreground py-2 rounded">
-                                      TREINO {category}
-                                    </h3>
-                                    <div className="space-y-2">
-                                      {workout.exercises
-                                        .filter(ex => ex.category === category)
-                                        .map((exercise, index) => (
-                                          <div key={exercise.id} className="border-b pb-2 last:border-b-0">
-                                            <div className="grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
-                                              <div className="md:col-span-2 font-medium">{exercise.name}</div>
-                                              <div className="text-center">
-                                                <span className="font-medium">{exercise.series}</span> séries
-                                              </div>
-                                              <div className="text-center">{exercise.repetitions}</div>
-                                              <div className="text-center">{exercise.rest || '-'}</div>
-                                              <div className="text-xs">{exercise.notes || '-'}</div>
-                                            </div>
-                                            {exercise.videoLink && (
-                                              <div className="mt-1">
-                                                <a 
-                                                  href={exercise.videoLink} 
-                                                  target="_blank" 
-                                                  rel="noopener noreferrer"
-                                                  className="text-blue-600 hover:underline text-xs"
-                                                >
-                                                  Ver vídeo
-                                                </a>
-                                              </div>
-                                            )}
-                                          </div>
-                                        ))}
-                                    </div>
+                                 <h3 className="font-semibold text-lg mb-3 text-center bg-primary text-primary-foreground py-2 rounded">
+                                       TREINO {category}
+                                     </h3>
+                                     <div className="space-y-2">
+                                       {workout.exercises
+                                         .filter(ex => ex.category === category)
+                                         .map((exercise, index) => (
+                                           <div key={exercise.id} className="border-b pb-2 last:border-b-0">
+                                             <div className="grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
+                                               <div className="md:col-span-2 font-medium">{exercise.name}</div>
+                                               <div className="text-center">
+                                                 <span className="font-medium">{exercise.series}</span> séries
+                                               </div>
+                                               <div className="text-center">{exercise.repetitions}</div>
+                                               <div className="text-center">{exercise.rest || '-'}</div>
+                                               <div className="text-xs">{exercise.notes || '-'}</div>
+                                             </div>
+                                             {exercise.videoLink && (
+                                               <div className="mt-1">
+                                                 <a 
+                                                   href={exercise.videoLink} 
+                                                   target="_blank" 
+                                                   rel="noopener noreferrer"
+                                                   className="text-blue-600 hover:underline text-xs"
+                                                 >
+                                                   Ver vídeo
+                                                 </a>
+                                               </div>
+                                             )}
+                                           </div>
+                                         ))}
+                                     </div>
+                                     <div className="flex gap-2 mt-4 pt-3 border-t">
+                                       <Button size="sm" variant="outline">
+                                         <Edit className="h-3 w-3 mr-1" />
+                                         Editar
+                                       </Button>
+                                       <Button size="sm" variant="outline">
+                                         <Plus className="h-3 w-3 mr-1" />
+                                         Adicionar
+                                       </Button>
+                                       <Button size="sm" variant="destructive">
+                                         <Trash2 className="h-3 w-3 mr-1" />
+                                         Excluir
+                                       </Button>
+                                     </div>
                                   </div>
                                 ))}
                               </div>
