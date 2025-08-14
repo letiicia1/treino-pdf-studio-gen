@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Smartphone, User, Link, Trash2, Eye } from "lucide-react";
-import { Exercise } from "@/types/workout";
+import { Exercise, SavedWorkout } from "@/types/workout";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Student {
   id: string;
   name: string;
   email: string;
   phone: string;
-  category: string;
+  workoutId: string;
+  workoutName: string;
   publicLink: string;
   createdAt: Date;
 }
@@ -26,39 +28,82 @@ interface AppBuilderProps {
 
 const AppBuilder = ({ exercises }: AppBuilderProps) => {
   const [students, setStudents] = useState<Student[]>([]);
+  const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
   const [newStudent, setNewStudent] = useState({
     name: '',
     email: '',
     phone: '',
-    category: 'A'
+    workoutId: ''
   });
 
-  const generatePublicLink = (studentId: string, category: string) => {
+  useEffect(() => {
+    loadSavedWorkouts();
+  }, []);
+
+  const loadSavedWorkouts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ready_workouts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const workouts: SavedWorkout[] = data?.map(item => ({
+        id: item.id,
+        name: item.name,
+        gender: item.category as 'masculino' | 'feminino',
+        weeklyFrequency: item.weekly_frequency || 3,
+        level: item.level_category as 'iniciante' | 'intermediario' | 'avancado',
+        subLevel: item.level_number as 1 | 2 | 3,
+        levelComplement: item.level_complement,
+        objective: '',
+        exercises: (item.workout_data as any)?.exercises || [],
+        categories: [],
+        headerText: '',
+        createdAt: new Date(item.created_at),
+        lastModified: new Date(item.updated_at)
+      })) || [];
+
+      setSavedWorkouts(workouts);
+    } catch (error) {
+      console.error('Erro ao carregar treinos salvos:', error);
+    }
+  };
+
+  const generatePublicLink = (studentId: string, workoutId: string) => {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/app/${studentId}?category=${category}`;
+    return `${baseUrl}/app/${studentId}?workout=${workoutId}`;
   };
 
   const handleAddStudent = () => {
-    if (!newStudent.name || !newStudent.email) {
-      alert('Preencha pelo menos o nome e email do aluno.');
+    if (!newStudent.name || !newStudent.email || !newStudent.workoutId) {
+      alert('Preencha o nome, email e selecione um treino.');
+      return;
+    }
+
+    const selectedWorkout = savedWorkouts.find(w => w.id === newStudent.workoutId);
+    if (!selectedWorkout) {
+      alert('Treino selecionado não encontrado.');
       return;
     }
 
     const studentId = Date.now().toString();
-    const publicLink = generatePublicLink(studentId, newStudent.category);
+    const publicLink = generatePublicLink(studentId, newStudent.workoutId);
     
     const student: Student = {
       id: studentId,
       name: newStudent.name,
       email: newStudent.email,
       phone: newStudent.phone,
-      category: newStudent.category,
+      workoutId: newStudent.workoutId,
+      workoutName: selectedWorkout.name,
       publicLink,
       createdAt: new Date()
     };
 
     setStudents([...students, student]);
-    setNewStudent({ name: '', email: '', phone: '', category: 'A' });
+    setNewStudent({ name: '', email: '', phone: '', workoutId: '' });
   };
 
   const handleRemoveStudent = (id: string) => {
@@ -125,21 +170,21 @@ const AppBuilder = ({ exercises }: AppBuilderProps) => {
                 />
               </div>
               
-              <div>
-                <Label htmlFor="student-category">Treino</Label>
+              <div className="md:col-span-2">
+                <Label htmlFor="student-workout">Treino da Biblioteca *</Label>
                 <Select 
-                  value={newStudent.category} 
-                  onValueChange={(value) => setNewStudent({ ...newStudent, category: value })}
+                  value={newStudent.workoutId} 
+                  onValueChange={(value) => setNewStudent({ ...newStudent, workoutId: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione um treino salvo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="A">Treino A</SelectItem>
-                    <SelectItem value="B">Treino B</SelectItem>
-                    <SelectItem value="C">Treino C</SelectItem>
-                    <SelectItem value="D">Treino D</SelectItem>
-                    <SelectItem value="E">Treino E</SelectItem>
+                    {savedWorkouts.map((workout) => (
+                      <SelectItem key={workout.id} value={workout.id}>
+                        {workout.name} - {workout.gender} ({workout.level} {workout.subLevel})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -165,7 +210,7 @@ const AppBuilder = ({ exercises }: AppBuilderProps) => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h4 className="font-semibold">{student.name}</h4>
-                          <Badge variant="secondary">Treino {student.category}</Badge>
+                          <Badge variant="secondary">{student.workoutName}</Badge>
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
                           <p>📧 {student.email}</p>

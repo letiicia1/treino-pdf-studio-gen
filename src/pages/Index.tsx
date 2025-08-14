@@ -9,7 +9,9 @@ import ExercisePreview from "@/components/ExercisePreview";
 import BrandingSettings from "@/components/BrandingSettings";
 import PDFGenerator from "@/components/PDFGenerator";
 import SavedWorkoutLibraryButton from "@/components/SavedWorkoutLibraryButton";
+import AppBuilder from "@/components/AppBuilder";
 import { Exercise, BrandingConfig } from "@/types/workout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -33,6 +35,12 @@ const Index = () => {
   const handleUpdateExerciseName = (id: string, newName: string) => {
     setExercises(exercises.map(ex => 
       ex.id === id ? { ...ex, name: newName } : ex
+    ));
+  };
+
+  const handleUpdateExercise = (id: string, updatedExercise: Partial<Exercise>) => {
+    setExercises(exercises.map(ex => 
+      ex.id === id ? { ...ex, ...updatedExercise } : ex
     ));
   };
 
@@ -70,70 +78,84 @@ const Index = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8 space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Column - Form and List */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Exercise Form */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 justify-between">
-                  <div className="flex items-center gap-2">
-                    <Dumbbell className="h-5 w-5" />
-                    Nova Ficha de Treino em PDF
-                  </div>
-                  <div className="flex-shrink-0">
-                    <SavedWorkoutLibraryButton
-                      currentExercises={exercises}
-                      branding={branding}
-                      onLoadWorkout={handleLoadWorkout}
+        {/* App Builder Section */}
+        <Tabs defaultValue="workout" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="workout">Criação de Fichas PDF</TabsTrigger>
+            <TabsTrigger value="apps">Criação de Aplicativos</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="workout" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Column - Form and List */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Exercise Form */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 justify-between">
+                      <div className="flex items-center gap-2">
+                        <Dumbbell className="h-5 w-5" />
+                        Nova Ficha de Treino em PDF
+                      </div>
+                      <div className="flex-shrink-0">
+                        <SavedWorkoutLibraryButton
+                          currentExercises={exercises}
+                          branding={branding}
+                          onLoadWorkout={handleLoadWorkout}
+                        />
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <WorkoutForm 
+                      onAddExercise={handleAddExercise}
+                      onAddMultipleExercises={handleAddMultipleExercises}
                     />
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <WorkoutForm 
-                  onAddExercise={handleAddExercise}
-                  onAddMultipleExercises={handleAddMultipleExercises}
+                  </CardContent>
+                </Card>
+
+                {/* Exercise Preview */}
+                {exercises.length > 0 && (
+                  <ExercisePreview
+                    exercises={exercises}
+                    onUpdateExercise={handleUpdateExerciseName}
+                  />
+                )}
+
+                {/* Exercise List */}
+                <ExerciseList
+                  exercises={exercises}
+                  onRemoveExercise={handleRemoveExercise}
+                  onUpdateExercise={handleUpdateExercise}
                 />
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Exercise Preview */}
-            {exercises.length > 0 && (
-              <ExercisePreview
-                exercises={exercises}
-                onUpdateExercise={handleUpdateExerciseName}
-              />
-            )}
+              {/* Sidebar - Settings and Generator */}
+              <div className="space-y-6">
+                {/* Brand Customization */}
+                <BrandingSettings
+                  branding={branding}
+                  onUpdateBranding={handleUpdateBranding}
+                />
 
-            {/* Exercise List */}
-            <ExerciseList
-              exercises={exercises}
-              onRemoveExercise={handleRemoveExercise}
-            />
-          </div>
+                <Separator />
 
-          {/* Sidebar - Settings and Generator */}
-          <div className="space-y-6">
-            {/* Brand Customization */}
-            <BrandingSettings
-              branding={branding}
-              onUpdateBranding={handleUpdateBranding}
-            />
-
-            <Separator />
-
-            {/* PDF Generator */}
-            <PDFGenerator
-              exercises={exercises}
-              branding={branding}
-              weeklyFrequency={weeklyFrequency}
-              onWeeklyFrequencyChange={handleWeeklyFrequencyChange}
-              onClearExercises={handleClearAllExercises}
-            />
-          </div>
-        </div>
-
+                {/* PDF Generator */}
+                <PDFGenerator
+                  exercises={exercises}
+                  branding={branding}
+                  weeklyFrequency={weeklyFrequency}
+                  onWeeklyFrequencyChange={handleWeeklyFrequencyChange}
+                  onClearExercises={handleClearAllExercises}
+                />
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="apps" className="space-y-4">
+            <AppBuilder exercises={exercises} />
+          </TabsContent>
+        </Tabs>
 
         {/* Footer */}
         <Card className="bg-gradient-to-r from-gray-50 to-gray-100 border-t">
