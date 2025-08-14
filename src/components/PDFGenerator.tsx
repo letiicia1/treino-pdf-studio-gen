@@ -54,7 +54,7 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
         excelData.push([
           index + 1, // Exercise number
           exercise.name,
-          exercise.videoLink || '',
+          exercise.videoLink ? { f: `=HYPERLINK("${exercise.videoLink}","Ver Vídeo")` } : '',
           exercise.series.toString(),
           exercise.repetitions,
           exercise.rest || '',
