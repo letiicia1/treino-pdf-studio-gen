@@ -40,6 +40,9 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
   const [editingWorkout, setEditingWorkout] = useState<SavedWorkout | null>(null);
   const [editingName, setEditingName] = useState('');
   const [viewingWorkout, setViewingWorkout] = useState<SavedWorkout | null>(null);
+  const [editingExercises, setEditingExercises] = useState<Exercise[]>([]);
+  const [isEditingExercises, setIsEditingExercises] = useState(false);
+  const [currentWorkoutId, setCurrentWorkoutId] = useState<string | null>(null);
 
   // Load workouts from Supabase on component mount
   useEffect(() => {
@@ -414,6 +417,76 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
     }
   };
 
+  const handleEditExercises = (workout: SavedWorkout) => {
+    setEditingExercises([...workout.exercises]);
+    setIsEditingExercises(true);
+    setCurrentWorkoutId(workout.id);
+  };
+
+  const handleSaveExercises = async () => {
+    if (!currentWorkoutId) return;
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('ready_workouts')
+        .update({
+          workout_data: editingExercises as any,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentWorkoutId);
+
+      if (error) throw error;
+
+      // Update local state
+      setSavedWorkouts(prev => prev.map(w => 
+        w.id === currentWorkoutId 
+          ? { ...w, exercises: editingExercises, lastModified: new Date() }
+          : w
+      ));
+
+      setIsEditingExercises(false);
+      setCurrentWorkoutId(null);
+      setEditingExercises([]);
+      alert("Exercícios atualizados com sucesso!");
+    } catch (error) {
+      console.error('Erro ao salvar exercícios:', error);
+      alert("Erro ao salvar exercícios");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEditExercises = () => {
+    setIsEditingExercises(false);
+    setCurrentWorkoutId(null);
+    setEditingExercises([]);
+  };
+
+  const handleUpdateEditingExercise = (id: string, updatedExercise: Partial<Exercise>) => {
+    setEditingExercises(prev => prev.map(ex => 
+      ex.id === id ? { ...ex, ...updatedExercise } : ex
+    ));
+  };
+
+  const handleRemoveEditingExercise = (id: string) => {
+    setEditingExercises(prev => prev.filter(ex => ex.id !== id));
+  };
+
+  const handleAddNewExercise = () => {
+    const newExercise: Exercise = {
+      id: Date.now().toString(),
+      name: 'Novo Exercício',
+      series: 3,
+      repetitions: '12',
+      rest: '60s',
+      category: 'A',
+      notes: '',
+      videoLink: ''
+    };
+    setEditingExercises(prev => [...prev, newExercise]);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -675,20 +748,16 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                                            </div>
                                          ))}
                                      </div>
-                                     <div className="flex gap-2 mt-4 pt-3 border-t">
-                                       <Button size="sm" variant="outline">
-                                         <Edit className="h-3 w-3 mr-1" />
-                                         Editar
-                                       </Button>
-                                       <Button size="sm" variant="outline">
-                                         <Plus className="h-3 w-3 mr-1" />
-                                         Adicionar
-                                       </Button>
-                                       <Button size="sm" variant="destructive">
-                                         <Trash2 className="h-3 w-3 mr-1" />
-                                         Excluir
-                                       </Button>
-                                     </div>
+                                      <div className="flex gap-2 mt-4 pt-3 border-t">
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline"
+                                          onClick={() => handleEditExercises(workout)}
+                                        >
+                                          <Edit className="h-3 w-3 mr-1" />
+                                          Editar Treino
+                                        </Button>
+                                      </div>
                                   </div>
                                 ))}
                               </div>
@@ -921,11 +990,152 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                 Cancelar
               </Button>
             </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Exercise Editing Dialog */}
+    <Dialog open={isEditingExercises} onOpenChange={setIsEditingExercises}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar Exercícios do Treino</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {editingExercises.map((exercise, index) => (
+            <Card key={exercise.id} className="p-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline">{index + 1}</Badge>
+                  <Badge variant="secondary">Treino {exercise.category}</Badge>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label>Nome do Exercício</Label>
+                    <Input
+                      value={exercise.name}
+                      onChange={(e) => handleUpdateEditingExercise(exercise.id, { name: e.target.value })}
+                      placeholder="Nome do exercício"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Categoria</Label>
+                    <Select 
+                      value={exercise.category} 
+                      onValueChange={(value: 'A' | 'B' | 'C' | 'D' | 'E') => 
+                        handleUpdateEditingExercise(exercise.id, { category: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A">Treino A</SelectItem>
+                        <SelectItem value="B">Treino B</SelectItem>
+                        <SelectItem value="C">Treino C</SelectItem>
+                        <SelectItem value="D">Treino D</SelectItem>
+                        <SelectItem value="E">Treino E</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label>Séries</Label>
+                    <Input
+                      type="number"
+                      value={exercise.series}
+                      onChange={(e) => handleUpdateEditingExercise(exercise.id, { series: parseInt(e.target.value) })}
+                      placeholder="3"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Repetições</Label>
+                    <Input
+                      value={exercise.repetitions}
+                      onChange={(e) => handleUpdateEditingExercise(exercise.id, { repetitions: e.target.value })}
+                      placeholder="12"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Pausa</Label>
+                    <Input
+                      value={exercise.rest || ''}
+                      onChange={(e) => handleUpdateEditingExercise(exercise.id, { rest: e.target.value })}
+                      placeholder="60s"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label>Link do Vídeo (opcional)</Label>
+                  <Input
+                    value={exercise.videoLink || ''}
+                    onChange={(e) => handleUpdateEditingExercise(exercise.id, { videoLink: e.target.value })}
+                    placeholder="https://youtube.com/..."
+                  />
+                </div>
+                
+                <div>
+                  <Label>Observações (opcional)</Label>
+                  <Textarea
+                    value={exercise.notes || ''}
+                    onChange={(e) => handleUpdateEditingExercise(exercise.id, { notes: e.target.value })}
+                    placeholder="Observações sobre o exercício..."
+                    rows={2}
+                  />
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleRemoveEditingExercise(exercise.id)}
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Remover
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+          
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleAddNewExercise}
+              className="flex-1"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Exercício
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+          
+          <div className="flex gap-2 pt-4 border-t">
+            <Button 
+              onClick={handleSaveExercises} 
+              className="flex-1" 
+              disabled={loading}
+            >
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleCancelEditExercises}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  </div>
+);
 };
 
 export default SavedWorkoutLibrary;
