@@ -201,11 +201,15 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
           // Add clickable links for videos
           if (data.column.index === 1 && data.row.index >= 0) {
             const exercise = categoryExercises[data.row.index];
-            if (exercise?.videoLink && data.cell.text && data.cell.text.includes('Ver Vídeo')) {
+            if (exercise?.videoLink) {
               // Create clickable link area over the entire cell
               doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, {
                 url: exercise.videoLink
               });
+              
+              // Set the text color to blue to indicate it's a link
+              doc.setTextColor(0, 0, 255);
+              doc.text('Ver Vídeo', data.cell.x + 2, data.cell.y + data.cell.height / 2 + 2);
             }
           }
         }
