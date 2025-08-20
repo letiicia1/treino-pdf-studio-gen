@@ -201,7 +201,8 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
           // Add clickable links for videos
           if (data.column.index === 1 && data.row.index >= 0) {
             const exercise = categoryExercises[data.row.index];
-            if (exercise?.videoLink && data.cell.text[0] === 'Ver Vídeo') {
+            if (exercise?.videoLink && data.cell.text && data.cell.text.includes('Ver Vídeo')) {
+              // Create clickable link area over the entire cell
               doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, {
                 url: exercise.videoLink
               });
