@@ -284,7 +284,19 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
           4: { cellWidth: 20, halign: 'center' },
           5: { cellWidth: 35, halign: 'left' }
         },
-        margin: { left: 15, right: 15 }
+        margin: { left: 15, right: 15 },
+        didDrawCell: (data) => {
+          // Add clickable links for video column
+          if (data.column.index === 1 && data.row.index >= 0) {
+            const exercise = categoryExercises[data.row.index];
+            if (exercise?.videoLink && data.cell.text[0] === 'Ver Vídeo') {
+              // Create clickable link annotation that opens the YouTube video
+              doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, {
+                url: exercise.videoLink
+              });
+            }
+          }
+        }
       });
     });
 
@@ -773,58 +785,67 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
                             Carregar
                           </Button>
                           
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openNameEditor(workout)}
-                          >
-                            <Pencil className="h-3 w-3 mr-1" />
-                            Editar Nome
-                          </Button>
-                          
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => openHeaderEditor(workout)}
-                              >
-                                <FileText className="h-3 w-3 mr-1" />
-                                PDF
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Personalizar PDF</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <Label htmlFor="custom-header">Cabeçalho do PDF</Label>
-                                  <Input
-                                    id="custom-header"
-                                    value={headerText}
-                                    onChange={(e) => setHeaderText(e.target.value)}
-                                    placeholder="FICHA DE TREINO"
-                                  />
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button onClick={handleDownloadWithCustomHeader} className="flex-1">
-                                    <FileText className="h-4 w-4 mr-2" />
-                                    Baixar PDF
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => generateWorkoutExcel(workout)}
-                          >
-                            <FileSpreadsheet className="h-3 w-3 mr-1" />
-                            Excel
-                          </Button>
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => openNameEditor(workout)}
+                           >
+                             <Pencil className="h-3 w-3 mr-1" />
+                             Editar Nome
+                           </Button>
+                           
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => handleEditExercises(workout)}
+                           >
+                             <Edit className="h-3 w-3 mr-1" />
+                             Editar Exercícios
+                           </Button>
+                           
+                           <Dialog>
+                             <DialogTrigger asChild>
+                               <Button
+                                 size="sm"
+                                 variant="default"
+                                 onClick={() => openHeaderEditor(workout)}
+                               >
+                                 <FileText className="h-3 w-3 mr-1" />
+                                 PDF
+                               </Button>
+                             </DialogTrigger>
+                             <DialogContent>
+                               <DialogHeader>
+                                 <DialogTitle>Personalizar PDF</DialogTitle>
+                               </DialogHeader>
+                               <div className="space-y-4">
+                                 <div>
+                                   <Label htmlFor="custom-header">Cabeçalho do PDF</Label>
+                                   <Input
+                                     id="custom-header"
+                                     value={headerText}
+                                     onChange={(e) => setHeaderText(e.target.value)}
+                                     placeholder="FICHA DE TREINO"
+                                   />
+                                 </div>
+                                 <div className="flex gap-2">
+                                   <Button onClick={handleDownloadWithCustomHeader} className="flex-1">
+                                     <FileText className="h-4 w-4 mr-2" />
+                                     Baixar PDF
+                                   </Button>
+                                 </div>
+                               </div>
+                             </DialogContent>
+                           </Dialog>
+                           
+                           <Button
+                             size="sm"
+                             variant="secondary"
+                             onClick={() => generateWorkoutExcel(workout)}
+                           >
+                             <FileSpreadsheet className="h-3 w-3 mr-1" />
+                             Excel
+                           </Button>
                           
                           <Button
                             size="sm"
