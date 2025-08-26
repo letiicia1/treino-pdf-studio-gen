@@ -198,12 +198,12 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
         },
         margin: { left: 15, right: 15 },
         didDrawCell: function(data) {
-          // Add clickable links for videos after the cell is drawn
+          // Add clickable links for videos
           if (data.column.index === 1 && data.row.index >= 0) {
             const exercise = categoryExercises[data.row.index];
             if (exercise?.videoLink && data.cell.text[0] === 'Ver Vídeo') {
-              // Create clickable link area over the entire cell
-              doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, {
+              // Create clickable annotation
+              doc.textWithLink('Ver Vídeo', data.cell.x + 2, data.cell.y + (data.cell.height / 2) + 2, {
                 url: exercise.videoLink
               });
             }
