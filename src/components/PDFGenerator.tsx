@@ -202,8 +202,8 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
           if (data.column.index === 1 && data.row.index >= 0) {
             const exercise = categoryExercises[data.row.index];
             if (exercise?.videoLink && data.cell.text[0] === 'Ver Vídeo') {
-              // Create clickable annotation
-              doc.textWithLink('Ver Vídeo', data.cell.x + 2, data.cell.y + (data.cell.height / 2) + 2, {
+              // Create clickable link annotation that opens the YouTube video
+              doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, {
                 url: exercise.videoLink
               });
             }
