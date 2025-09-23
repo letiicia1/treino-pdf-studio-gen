@@ -356,7 +356,8 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
     });
     
     const levelText = `${workout.level}-${workout.subLevel}`;
-    const fileName = `planilha-${levelText}-${workout.weeklyFrequency}x-semana.xlsx`;
+    const complement = workout.levelComplement ? `-${workout.levelComplement.replace(/\s+/g, '-')}` : '';
+    const fileName = `treino-${workout.gender}-${levelText}${complement}-${workout.weeklyFrequency}x-semana.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
