@@ -333,7 +333,7 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
         excelData.push([
           index + 1,
           exercise.name,
-          exercise.videoLink ? { f: `=HYPERLINK("${exercise.videoLink}","Ver Vídeo")` } : '',
+          exercise.videoLink ? { f: `=HYPERLINK("${exercise.videoLink}","${exercise.videoLink}")` } : '',
           exercise.series.toString(),
           exercise.repetitions,
           exercise.rest || '',
