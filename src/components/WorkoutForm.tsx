@@ -11,6 +11,7 @@ import { Plus, Upload, FileSpreadsheet } from "lucide-react";
 import { Exercise } from "@/types/workout";
 import BulkExerciseImport from "./BulkExerciseImport";
 import FileUploader from "./FileUploader";
+import { separateExerciseNameAndLink } from "@/lib/utils";
 
 interface WorkoutFormProps {
   onAddExercise: (exercise: Exercise) => void;
@@ -32,9 +33,17 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
     e.preventDefault();
     if (!exercise.name || !exercise.repetitions) return;
 
+    // Separar nome do exercício do link se estiverem colados
+    const { name, videoLink: extractedLink } = separateExerciseNameAndLink(exercise.name);
+    
+    // Usar o link extraído se não há link definido, ou manter o link definido
+    const finalVideoLink = exercise.videoLink || extractedLink;
+
     onAddExercise({
       id: Date.now().toString(),
-      ...exercise
+      ...exercise,
+      name,
+      videoLink: finalVideoLink
     });
 
     setExercise({

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileSpreadsheet, X } from "lucide-react";
 import { Exercise } from "@/types/workout";
 import * as XLSX from 'xlsx';
+import { separateExerciseNameAndLink } from "@/lib/utils";
 
 interface FileUploaderProps {
   onImportExercises: (exercises: Exercise[]) => void;
@@ -60,15 +61,23 @@ const FileUploader = ({ onImportExercises }: FileUploaderProps) => {
 
           // Process exercise row
           if (row.length >= 1 && firstCell) {
-            const [name, videoLink, series, repetitions, rest, notes] = row;
+            const [nameWithPossibleLink, videoLink, series, repetitions, rest, notes] = row;
+            
+            // Separar nome do exercício do link se estiverem colados
+            const { name, videoLink: extractedLink } = separateExerciseNameAndLink(String(nameWithPossibleLink).trim());
+            
+            // Usar o link extraído se não há link separado, ou o link separado se existe
+            const finalVideoLink = (videoLink && String(videoLink).trim().startsWith('http')) 
+              ? String(videoLink).trim() 
+              : extractedLink || '';
             
             const newExercise: Exercise = {
               id: `${currentCategory}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              name: String(name).trim(),
+              name,
               series: parseInt(String(series)) || 1,
               repetitions: String(repetitions || '').trim() || '10',
               rest: String(rest || '').trim() || '60s',
-              videoLink: String(videoLink || '').trim(),
+              videoLink: finalVideoLink,
               notes: String(notes || '').trim(),
               category: currentCategory // Forçar a categoria correta
             };

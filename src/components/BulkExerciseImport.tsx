@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Upload, Plus } from "lucide-react";
 import { Exercise } from "@/types/workout";
+import { separateExerciseNameAndLink } from "@/lib/utils";
 
 interface BulkExerciseImportProps {
   onImportExercises: (exercises: Exercise[]) => void;
@@ -30,21 +31,29 @@ const BulkExerciseImport = ({ onImportExercises }: BulkExerciseImportProps) => {
       const parts = line.split(/\t+|\s{2,}/).filter(part => part.trim());
       
       if (parts.length >= 2) {
-        const [name, videoLink, series, repetitions, rest, ...notesParts] = parts;
+        const [nameWithPossibleLink, videoLink, series, repetitions, rest, ...notesParts] = parts;
         const notes = notesParts.join(' ').trim();
         
         // Skip if name is missing
-        if (!name.trim()) {
+        if (!nameWithPossibleLink.trim()) {
           continue;
         }
         
+        // Separar nome do exercício do link se estiverem colados
+        const { name, videoLink: extractedLink } = separateExerciseNameAndLink(nameWithPossibleLink.trim());
+        
+        // Usar o link extraído se não há link separado, ou o link separado se existe
+        const finalVideoLink = (videoLink && videoLink.startsWith('http')) 
+          ? videoLink.trim() 
+          : extractedLink || '';
+        
         exercises.push({
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          name: name.trim(),
+          name,
           series: parseInt(series) || 1,
           repetitions: repetitions?.trim() || '10',
           rest: rest?.trim() || '60s',
-          videoLink: videoLink && videoLink.startsWith('http') ? videoLink.trim() : '',
+          videoLink: finalVideoLink,
           notes: notes || '',
           category: category
         });
