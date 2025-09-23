@@ -204,9 +204,10 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
       // Studio name centered in the stripe
       doc.setFontSize(16);
       doc.setTextColor(255, 255, 255);
-      const studioNameWidth = doc.getTextWidth(branding.studioName);
+      const studioName = "PÂMELA PIRES - ACADEMIA DE MUSCULAÇÃO";
+      const studioNameWidth = doc.getTextWidth(studioName);
       const centerX = (210 - studioNameWidth) / 2;
-      doc.text(branding.studioName, centerX, 13);
+      doc.text(studioName, centerX, 13);
       
       // Custom header or default
       doc.setFontSize(18);
@@ -332,7 +333,7 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
         excelData.push([
           index + 1,
           exercise.name,
-          exercise.videoLink || '',
+          exercise.videoLink ? { f: `=HYPERLINK("${exercise.videoLink}","${exercise.videoLink}")` } : '',
           exercise.series.toString(),
           exercise.repetitions,
           exercise.rest || '',
