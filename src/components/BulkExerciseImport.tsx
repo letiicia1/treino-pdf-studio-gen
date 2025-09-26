@@ -31,25 +31,33 @@ const BulkExerciseImport = ({ onImportExercises }: BulkExerciseImportProps) => {
       const parts = line.split(/\t+|\s{2,}/).filter(part => part.trim());
       
       if (parts.length >= 2) {
-        const [nameWithPossibleLink, videoLink, series, repetitions, rest, ...notesParts] = parts;
+        const [exerciseName, secondColumn, series, repetitions, rest, ...notesParts] = parts;
         const notes = notesParts.join(' ').trim();
         
         // Skip if name is missing
-        if (!nameWithPossibleLink.trim()) {
+        if (!exerciseName.trim()) {
           continue;
         }
         
-        // Separar nome do exercício do link se estiverem colados
-        const { name, videoLink: extractedLink } = separateExerciseNameAndLink(nameWithPossibleLink.trim());
+        // Use the clean exercise name from first column
+        const exerciseNameClean = exerciseName.trim();
         
-        // Usar o link extraído se não há link separado, ou o link separado se existe
-        const finalVideoLink = (videoLink && videoLink.startsWith('http')) 
-          ? videoLink.trim() 
-          : extractedLink || '';
+        // Check if second column contains a link (with or without text before it)
+        let finalVideoLink = '';
+        if (secondColumn) {
+          if (secondColumn.startsWith('http')) {
+            // Second column is just a link
+            finalVideoLink = secondColumn.trim();
+          } else {
+            // Second column might have text + link combined
+            const { videoLink: extractedLink } = separateExerciseNameAndLink(secondColumn.trim());
+            finalVideoLink = extractedLink || '';
+          }
+        }
         
         exercises.push({
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          name,
+          name: exerciseNameClean,
           series: parseInt(series) || 1,
           repetitions: repetitions?.trim() || '10',
           rest: rest?.trim() || '60s',
