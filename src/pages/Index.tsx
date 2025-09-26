@@ -10,6 +10,7 @@ import BrandingSettings from "@/components/BrandingSettings";
 import PDFGenerator from "@/components/PDFGenerator";
 import SavedWorkoutLibraryButton from "@/components/SavedWorkoutLibraryButton";
 import AppBuilder from "@/components/AppBuilder";
+import ExerciseDatabase from "@/components/ExerciseDatabase";
 import { Exercise, BrandingConfig } from "@/types/workout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -80,8 +81,9 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* App Builder Section */}
         <Tabs defaultValue="workout" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="workout">Criação de Fichas PDF</TabsTrigger>
+            <TabsTrigger value="database">Base de Dados</TabsTrigger>
             <TabsTrigger value="apps">Criação de Aplicativos</TabsTrigger>
           </TabsList>
           
@@ -150,6 +152,10 @@ const Index = () => {
                 />
               </div>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="database" className="space-y-4">
+            <ExerciseDatabase />
           </TabsContent>
           
           <TabsContent value="apps" className="space-y-4">
