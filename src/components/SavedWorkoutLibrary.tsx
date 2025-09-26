@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Archive, Download, Eye, Trash2, Plus, FileText, Edit, FileSpreadsheet, Pencil } from "lucide-react";
 import { SavedWorkout, Exercise, BrandingConfig } from "@/types/workout";
 import { supabase } from "@/integrations/supabase/client";
+import { separateExerciseNameAndLink } from "@/lib/utils";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -60,14 +61,43 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
       if (error) throw error;
 
       if (data) {
-        const workouts: SavedWorkout[] = data.map(workout => {
+        const workouts: SavedWorkout[] = await Promise.all(data.map(async workout => {
           let exercises: Exercise[] = [];
+          let needsUpdate = false;
+          
           try {
             if (Array.isArray(workout.workout_data)) {
-              exercises = workout.workout_data as unknown as Exercise[];
+              exercises = (workout.workout_data as unknown as Exercise[]).map(exercise => {
+                // Verificar se o nome contém um link do YouTube
+                const separated = separateExerciseNameAndLink(exercise.name);
+                
+                // Se encontrou um link e não existe videoLink ou é diferente, precisa atualizar
+                if (separated.videoLink && (!exercise.videoLink || exercise.videoLink !== separated.videoLink)) {
+                  needsUpdate = true;
+                  return {
+                    ...exercise,
+                    name: separated.name,
+                    videoLink: separated.videoLink
+                  };
+                }
+                
+                return exercise;
+              });
             }
           } catch (error) {
             console.error('Error parsing workout data:', error);
+          }
+
+          // Se precisa atualizar, salvar os exercícios corrigidos no banco
+          if (needsUpdate) {
+            try {
+              await supabase
+                .from('ready_workouts')
+                .update({ workout_data: exercises as any })
+                .eq('id', workout.id);
+            } catch (error) {
+              console.error('Error updating workout with separated links:', error);
+            }
           }
 
           const categories = [...new Set(exercises.map(ex => ex.category))];
@@ -87,7 +117,7 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
             createdAt: new Date(workout.created_at),
             lastModified: new Date(workout.updated_at)
           };
-        });
+        }));
         setSavedWorkouts(workouts);
       }
     } catch (error) {
@@ -107,6 +137,16 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
     setLoading(true);
     
     try {
+      // Processar exercícios para separar nome e link antes de salvar
+      const processedExercises = currentExercises.map(exercise => {
+        const separated = separateExerciseNameAndLink(exercise.name);
+        return {
+          ...exercise,
+          name: separated.name,
+          videoLink: separated.videoLink || exercise.videoLink
+        };
+      });
+
       const { data, error } = await supabase
         .from('ready_workouts')
         .insert({
@@ -116,7 +156,7 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
           level_category: saveForm.level,
           level_number: saveForm.subLevel,
           level_complement: saveForm.levelComplement,
-          workout_data: currentExercises as any,
+          workout_data: processedExercises as any,
           student_name: null
         })
         .select()
@@ -442,10 +482,21 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
 
     try {
       setLoading(true);
+      
+      // Processar exercícios para separar nome e link antes de salvar
+      const processedExercises = editingExercises.map(exercise => {
+        const separated = separateExerciseNameAndLink(exercise.name);
+        return {
+          ...exercise,
+          name: separated.name,
+          videoLink: separated.videoLink || exercise.videoLink
+        };
+      });
+      
       const { error } = await supabase
         .from('ready_workouts')
         .update({
-          workout_data: editingExercises as any,
+          workout_data: processedExercises as any,
           updated_at: new Date().toISOString()
         })
         .eq('id', currentWorkoutId);
@@ -455,7 +506,7 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
       // Update local state
       setSavedWorkouts(prev => prev.map(w => 
         w.id === currentWorkoutId 
-          ? { ...w, exercises: editingExercises, lastModified: new Date() }
+          ? { ...w, exercises: processedExercises, lastModified: new Date() }
           : w
       ));
 
@@ -478,6 +529,16 @@ const SavedWorkoutLibrary = ({ currentExercises, branding, onLoadWorkout }: Save
   };
 
   const handleUpdateEditingExercise = (id: string, updatedExercise: Partial<Exercise>) => {
+    // Se o nome foi alterado, verificar se contém link
+    if (updatedExercise.name !== undefined) {
+      const separated = separateExerciseNameAndLink(updatedExercise.name);
+      updatedExercise = {
+        ...updatedExercise,
+        name: separated.name,
+        videoLink: separated.videoLink || undefined
+      };
+    }
+    
     setEditingExercises(prev => prev.map(ex => 
       ex.id === id ? { ...ex, ...updatedExercise } : ex
     ));
