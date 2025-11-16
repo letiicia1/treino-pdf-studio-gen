@@ -39,12 +39,14 @@ const BulkExerciseImport = ({ onImportExercises }: BulkExerciseImportProps) => {
           continue;
         }
         
-        // Use the clean exercise name from first column
-        const exerciseNameClean = exerciseName.trim();
+        // First, try to separate name and link from first column
+        const { name: exerciseNameClean, videoLink: linkFromFirstColumn } = separateExerciseNameAndLink(exerciseName.trim());
         
         // Check if second column contains a link (with or without text before it)
-        let finalVideoLink = '';
-        if (secondColumn) {
+        let finalVideoLink = linkFromFirstColumn; // Use link from first column if found
+        
+        if (!finalVideoLink && secondColumn) {
+          // If no link found in first column, check second column
           if (secondColumn.startsWith('http')) {
             // Second column is just a link
             finalVideoLink = secondColumn.trim();
