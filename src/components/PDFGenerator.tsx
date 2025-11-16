@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { FileText, Download, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import jsPDF from 'jspdf';
@@ -22,6 +23,10 @@ interface PDFGeneratorProps {
 
 const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFrequencyChange, onDownload, onClearExercises }: PDFGeneratorProps) => {
   const [generalInstructions, setGeneralInstructions] = useState('');
+  const [studentName, setStudentName] = useState('');
+  const [level, setLevel] = useState<'iniciante' | 'intermediario' | 'avancado' | ''>('');
+  const [subLevel, setSubLevel] = useState<'1' | '2' | '3' | ''>('');
+  const [levelComplement, setLevelComplement] = useState('');
 
   // Count exercises by category
   const exercisesByCategory = exercises.reduce((acc, exercise) => {
@@ -54,7 +59,7 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
         excelData.push([
           index + 1, // Exercise number
           exercise.name,
-          exercise.videoLink ? { f: `=HYPERLINK("${exercise.videoLink}","Ver Vídeo")` } : '',
+          exercise.videoLink || '', // Direct link, not hyperlink
           exercise.series.toString(),
           exercise.repetitions,
           exercise.rest || '',
@@ -80,8 +85,14 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
       XLSX.utils.book_append_sheet(workbook, worksheet, `Treino ${category}`);
     });
     
+    // Generate filename based on level, frequency and complement
+    const levelText = level ? level.charAt(0).toUpperCase() + level.slice(1) : '';
+    const frequencyText = `${weeklyFrequency}x`;
+    const complementText = levelComplement ? `-${levelComplement}` : '';
+    const fileName = `${levelText}-${frequencyText}${complementText}.xlsx`;
+    
     // Save Excel file
-    XLSX.writeFile(workbook, 'planilha-treino.xlsx');
+    XLSX.writeFile(workbook, fileName);
   };
 
   const generatePDF = () => {
@@ -228,7 +239,7 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
     });
 
     // Save PDF
-    const fileName = `ficha-treino-${weeklyFrequency}x-semana.pdf`;
+    const fileName = `Ficha de treino ${weeklyFrequency}x.pdf`;
     doc.save(fileName);
     
     // Generate Excel file
@@ -318,6 +329,72 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
             <Download className="h-4 w-4 mr-2" />
             {exercises.length === 0 ? 'Adicione exercícios primeiro' : `Gerar PDF Completo (${categoriesWithExercises.length} treinos)`}
           </Button>
+        </div>
+
+        {/* Área de Cadastro para Salvar Treino */}
+        <Card className="bg-gray-50">
+          <CardHeader>
+            <CardTitle className="text-lg">Salvar Treino Pronto</CardTitle>
+            <p className="text-sm text-muted-foreground">Salve o treino atual para reutilizar depois</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="student-name">Nome do Aluno</Label>
+              <input
+                id="student-name"
+                type="text"
+                value={studentName}
+                onChange={(e) => setStudentName(e.target.value)}
+                placeholder="Ex: João Silva"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="level">Nível</Label>
+                <Select value={level} onValueChange={(value: any) => setLevel(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o nível" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="iniciante">Iniciante</SelectItem>
+                    <SelectItem value="intermediario">Intermediário</SelectItem>
+                    <SelectItem value="avancado">Avançado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="sub-level">Número do Nível</Label>
+                <Select value={subLevel} onValueChange={(value: any) => setSubLevel(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="1, 2 ou 3" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1</SelectItem>
+                    <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="3">3</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="level-complement">Complemento do Nível (opcional)</Label>
+              <input
+                id="level-complement"
+                type="text"
+                value={levelComplement}
+                onChange={(e) => setLevelComplement(e.target.value)}
+                placeholder="Ex: Foco em membros superiores"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-2">
 
           {exercises.length > 0 && onClearExercises && (
             <Button 
