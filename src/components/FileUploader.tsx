@@ -61,25 +61,61 @@ const FileUploader = ({ onImportExercises }: FileUploaderProps) => {
 
           // Process exercise row
           if (row.length >= 1 && firstCell) {
-            const [nameWithPossibleLink, videoLink, series, repetitions, rest, notes] = row;
-            
             // Separar nome do exercício do link se estiverem colados
-            const { name, videoLink: extractedLink } = separateExerciseNameAndLink(String(nameWithPossibleLink).trim());
+            const { name, videoLink: extractedLink } = separateExerciseNameAndLink(String(row[0]).trim());
             
-            // Usar o link extraído se não há link separado, ou o link separado se existe
-            const finalVideoLink = (videoLink && String(videoLink).trim().startsWith('http')) 
-              ? String(videoLink).trim() 
-              : extractedLink || '';
+            let videoLink = extractedLink || '';
+            let series = 1;
+            let repetitions = '10';
+            let rest = '';
+            let notes = '';
+            
+            // Processar as colunas restantes de forma inteligente
+            for (let i = 1; i < row.length; i++) {
+              const cell = String(row[i] || '').trim();
+              if (!cell) continue;
+              
+              // Se for um link HTTP
+              if (cell.startsWith('http')) {
+                if (!videoLink) videoLink = cell;
+                continue;
+              }
+              
+              // Se for pausa (contém 's', 'min', 'seg' ou é apenas números seguidos de unidade)
+              if (cell.match(/^\d+s$/i) || 
+                  cell.match(/^\d+\s*min/i) || 
+                  cell.match(/^\d+\s*seg/i)) {
+                rest = cell;
+                continue;
+              }
+              
+              // Se for apenas um número (provavelmente séries)
+              if (cell.match(/^\d+$/) && series === 1 && i === 1) {
+                series = parseInt(cell);
+                continue;
+              }
+              
+              // Se for repetições (números com traço, vírgula, ou texto descritivo)
+              if (cell.match(/^\d+[-,x]\d+/) || (cell.match(/^\d+$/) && i > 1)) {
+                if (repetitions === '10') {
+                  repetitions = cell;
+                  continue;
+                }
+              }
+              
+              // Qualquer outra coisa é nota/observação
+              notes = notes ? `${notes} ${cell}` : cell;
+            }
             
             const newExercise: Exercise = {
               id: `${currentCategory}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               name,
-              series: parseInt(String(series)) || 1,
-              repetitions: String(repetitions || '').trim() || '10',
-              rest: String(rest || '').trim() || '60s',
-              videoLink: finalVideoLink,
-              notes: String(notes || '').trim(),
-              category: currentCategory // Forçar a categoria correta
+              series: series,
+              repetitions: repetitions,
+              rest: rest,
+              videoLink: videoLink,
+              notes: notes,
+              category: currentCategory
             };
 
             allExercises.push(newExercise);
