@@ -30,41 +30,66 @@ const BulkExerciseImport = ({ onImportExercises }: BulkExerciseImportProps) => {
       // Split by tabs or multiple spaces
       const parts = line.split(/\t+|\s{2,}/).filter(part => part.trim());
       
-      if (parts.length >= 2) {
-        const [exerciseName, secondColumn, series, repetitions, rest, ...notesParts] = parts;
-        const notes = notesParts.join(' ').trim();
+      if (parts.length >= 1) {
+        // Separar nome e link da primeira coluna
+        const { name: exerciseNameClean, videoLink: linkFromFirstColumn } = separateExerciseNameAndLink(parts[0].trim());
         
         // Skip if name is missing
-        if (!exerciseName.trim()) {
+        if (!exerciseNameClean) {
           continue;
         }
         
-        // First, try to separate name and link from first column
-        const { name: exerciseNameClean, videoLink: linkFromFirstColumn } = separateExerciseNameAndLink(exerciseName.trim());
+        let videoLink = linkFromFirstColumn || '';
+        let series = 1;
+        let repetitions = '10';
+        let rest = '';
+        let notes = '';
         
-        // Check if second column contains a link (with or without text before it)
-        let finalVideoLink = linkFromFirstColumn; // Use link from first column if found
-        
-        if (!finalVideoLink && secondColumn) {
-          // If no link found in first column, check second column
-          if (secondColumn.startsWith('http')) {
-            // Second column is just a link
-            finalVideoLink = secondColumn.trim();
-          } else {
-            // Second column might have text + link combined
-            const { videoLink: extractedLink } = separateExerciseNameAndLink(secondColumn.trim());
-            finalVideoLink = extractedLink || '';
+        // Processar as colunas restantes de forma inteligente
+        for (let i = 1; i < parts.length; i++) {
+          const part = parts[i].trim();
+          
+          // Se for um link HTTP
+          if (part.startsWith('http')) {
+            if (!videoLink) videoLink = part;
+            continue;
           }
+          
+          // Se for pausa (contém 's', 'min', 'seg' ou é um range de números)
+          if (part.match(/^\d+s$/i) || 
+              part.match(/^\d+\s*min/i) || 
+              part.match(/^\d+\s*seg/i) ||
+              part.match(/^\d+-\d+$/)) {
+            rest = part;
+            continue;
+          }
+          
+          // Se for apenas um número (provavelmente séries)
+          if (part.match(/^\d+$/) && !series) {
+            series = parseInt(part);
+            continue;
+          }
+          
+          // Se for repetições (número com traço, vírgula, ou "x")
+          if (part.match(/^\d+[-,x]\d+/) || part.match(/^\d+$/)) {
+            if (!repetitions || repetitions === '10') {
+              repetitions = part;
+              continue;
+            }
+          }
+          
+          // Qualquer outra coisa é nota/observação
+          notes = notes ? `${notes} ${part}` : part;
         }
         
         exercises.push({
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           name: exerciseNameClean,
-          series: parseInt(series) || 1,
-          repetitions: repetitions?.trim() || '10',
-          rest: rest?.trim() || '60s',
-          videoLink: finalVideoLink,
-          notes: notes || '',
+          series: series,
+          repetitions: repetitions,
+          rest: rest,
+          videoLink: videoLink,
+          notes: notes,
           category: category
         });
       }
