@@ -44,6 +44,23 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
     // Create Excel workbook
     const workbook = XLSX.utils.book_new();
     
+    // Add Orientações sheet if there are general instructions
+    if (generalInstructions) {
+      const orientacoesData: any[] = [
+        ['Orientações Gerais'],
+        [''],
+        [generalInstructions]
+      ];
+      
+      const orientacoesSheet = XLSX.utils.aoa_to_sheet(orientacoesData);
+      
+      // Set column width
+      orientacoesSheet['!cols'] = [{ width: 100 }];
+      
+      // Add as first sheet
+      XLSX.utils.book_append_sheet(workbook, orientacoesSheet, 'Orientações');
+    }
+    
     // Create a separate worksheet for each category
     categoriesWithExercises.forEach((category) => {
       const categoryExercises = exercisesByCategory[category];
@@ -103,6 +120,39 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
 
     const doc = new jsPDF();
     let isFirstPage = true;
+
+    // Add general instructions page if provided
+    if (generalInstructions) {
+      // Navy blue stripe at the top
+      doc.setFillColor(25, 47, 89);
+      doc.rect(0, 0, 210, 20, 'F');
+      
+      // Studio name centered in the stripe
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      const studioName = "PÂMELA PIRES - ACADEMIA DE MUSCULAÇÃO";
+      const studioNameWidth = doc.getTextWidth(studioName);
+      const centerX = (210 - studioNameWidth) / 2;
+      doc.text(studioName, centerX, 13);
+      
+      // Orientações Gerais title
+      doc.setFontSize(18);
+      doc.setTextColor(25, 47, 89);
+      const titleText = 'Orientações Gerais';
+      const titleWidth = doc.getTextWidth(titleText);
+      const titleCenterX = (210 - titleWidth) / 2;
+      doc.text(titleText, titleCenterX, 40);
+      
+      // Instructions text
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      const splitText = doc.splitTextToSize(generalInstructions, 170);
+      doc.text(splitText, 20, 60);
+      
+      // Add page break after instructions
+      doc.addPage();
+      isFirstPage = true;
+    }
 
     // Generate a page for each category that has exercises
     categoriesWithExercises.forEach((category) => {
@@ -222,20 +272,6 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
           }
         }
       });
-
-      // General instructions (only on the first page)
-      if (category === categoriesWithExercises[0] && generalInstructions) {
-        const finalY = (doc as any).lastAutoTable.finalY + 15;
-        
-        doc.setFontSize(12);
-        doc.setTextColor(25, 47, 89);
-        doc.text('Orientações Gerais:', 20, finalY);
-        
-        doc.setFontSize(10);
-        doc.setTextColor(0, 0, 0);
-        const splitText = doc.splitTextToSize(generalInstructions, 170);
-        doc.text(splitText, 20, finalY + 8);
-      }
     });
 
     // Save PDF
