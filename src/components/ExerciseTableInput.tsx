@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, TableIcon } from "lucide-react";
+import { Plus, Trash2, TableIcon, Download, FileSpreadsheet } from "lucide-react";
 import { Exercise } from "@/types/workout";
 import { separateExerciseNameAndLink } from "@/lib/utils";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ExerciseTableInputProps {
   onImportExercises: (exercises: Exercise[]) => void;
@@ -145,6 +148,75 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
 
   const filledRowsCount = rows.filter(row => row.name.trim()).length;
 
+  const exportToExcel = () => {
+    const filledRows = rows.filter(row => row.name.trim());
+    
+    if (filledRows.length === 0) {
+      alert('Nenhum exercício para exportar!');
+      return;
+    }
+
+    const excelData = filledRows.map((row, index) => ({
+      '#': index + 1,
+      'Exercício': row.name,
+      'Vídeo': row.videoLink,
+      'Séries': row.series,
+      'Repetições': row.repetitions,
+      'Pausa': row.rest,
+      'Observações': row.notes
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `Treino ${selectedCategory}`);
+    
+    XLSX.writeFile(workbook, `Treino_${selectedCategory}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const exportToPDF = () => {
+    const filledRows = rows.filter(row => row.name.trim());
+    
+    if (filledRows.length === 0) {
+      alert('Nenhum exercício para exportar!');
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(18);
+    doc.text(`Treino ${selectedCategory}`, 14, 20);
+    
+    // Preparar dados para a tabela
+    const tableData = filledRows.map((row, index) => [
+      index + 1,
+      row.name,
+      row.series,
+      row.repetitions,
+      row.rest,
+      row.notes
+    ]);
+
+    // Gerar tabela
+    autoTable(doc, {
+      startY: 30,
+      head: [['#', 'Exercício', 'Séries', 'Repetições', 'Pausa', 'Observações']],
+      body: tableData,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246] },
+      columnStyles: {
+        0: { cellWidth: 10 },
+        1: { cellWidth: 60 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 50 }
+      }
+    });
+
+    doc.save(`Treino_${selectedCategory}_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
@@ -264,14 +336,32 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
             </Table>
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={addMoreRows} variant="outline" className="flex-1">
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={addMoreRows} variant="outline">
               <Plus className="h-4 w-4 mr-2" />
               Adicionar mais linhas
             </Button>
-            <Button onClick={clearTable} variant="outline" className="flex-1">
+            <Button onClick={clearTable} variant="outline">
               <Trash2 className="h-4 w-4 mr-2" />
               Limpar tabela
+            </Button>
+            <Button 
+              onClick={exportToExcel} 
+              variant="outline" 
+              disabled={filledRowsCount === 0}
+              className="bg-green-50 hover:bg-green-100"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar para Excel
+            </Button>
+            <Button 
+              onClick={exportToPDF} 
+              variant="outline" 
+              disabled={filledRowsCount === 0}
+              className="bg-red-50 hover:bg-red-100"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar para PDF
             </Button>
           </div>
 
