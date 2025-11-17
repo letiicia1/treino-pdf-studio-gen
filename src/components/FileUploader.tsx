@@ -65,56 +65,68 @@ const FileUploader = ({ onImportExercises }: FileUploaderProps) => {
             const { name, videoLink: extractedLink } = separateExerciseNameAndLink(String(row[0]).trim());
             
             let videoLink = extractedLink || '';
-            let series = 1;
-            let repetitions = '10';
+            let series = 0;
+            let repetitions = '';
             let rest = '';
             let notes = '';
             
-            // Processar as colunas restantes de forma inteligente
-            for (let i = 1; i < row.length; i++) {
-              const cell = String(row[i] || '').trim();
-              if (!cell) continue;
-              
-              // Se for um link HTTP
+            // Processar colunas na ordem: Link (se não extraído), Séries, Repetições, Pausa, Observações
+            let colIndex = 1;
+            
+            // Coluna 1: Link do vídeo (se não foi extraído do nome)
+            if (colIndex < row.length && !videoLink) {
+              const cell = String(row[colIndex] || '').trim();
               if (cell.startsWith('http')) {
-                if (!videoLink) videoLink = cell;
-                continue;
+                videoLink = cell;
+                colIndex++;
               }
-              
-              // Se for pausa (contém 's', 'min', 'seg' ou é apenas números seguidos de unidade)
-              if (cell.match(/^\d+s$/i) || 
-                  cell.match(/^\d+\s*min/i) || 
-                  cell.match(/^\d+\s*seg/i)) {
-                rest = cell;
-                continue;
-              }
-              
-              // Se for apenas um número (provavelmente séries)
-              if (cell.match(/^\d+$/) && series === 1 && i === 1) {
+            }
+            
+            // Coluna seguinte: Séries (apenas número)
+            if (colIndex < row.length) {
+              const cell = String(row[colIndex] || '').trim();
+              if (cell.match(/^\d+$/)) {
                 series = parseInt(cell);
-                continue;
+                colIndex++;
               }
-              
-              // Se for repetições (números com traço, vírgula, ou texto descritivo)
-              if (cell.match(/^\d+[-,x]\d+/) || (cell.match(/^\d+$/) && i > 1)) {
-                if (repetitions === '10') {
-                  repetitions = cell;
-                  continue;
-                }
+            }
+            
+            // Coluna seguinte: Repetições (número ou range)
+            if (colIndex < row.length) {
+              const cell = String(row[colIndex] || '').trim();
+              if (cell) {
+                repetitions = cell;
+                colIndex++;
               }
-              
-              // Qualquer outra coisa é nota/observação
-              notes = notes ? `${notes} ${cell}` : cell;
+            }
+            
+            // Coluna seguinte: Pausa (com 's', 'min', 'seg')
+            if (colIndex < row.length) {
+              const cell = String(row[colIndex] || '').trim();
+              if (cell) {
+                rest = cell;
+                colIndex++;
+              }
+            }
+            
+            // Restante: Observações
+            if (colIndex < row.length) {
+              const remainingCells = [];
+              for (let i = colIndex; i < row.length; i++) {
+                const cell = String(row[i] || '').trim();
+                if (cell) remainingCells.push(cell);
+              }
+              notes = remainingCells.join(' ');
             }
             
             const newExercise: Exercise = {
               id: `${currentCategory}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               name,
-              series: series,
-              repetitions: repetitions,
-              rest: rest,
-              videoLink: videoLink,
-              notes: notes,
+              series: series || 0,
+              repetitions: repetitions || '',
+              rest: rest || '',
+              videoLink: videoLink || '',
+              notes: notes || '',
               category: currentCategory
             };
 
