@@ -40,56 +40,63 @@ const BulkExerciseImport = ({ onImportExercises }: BulkExerciseImportProps) => {
         }
         
         let videoLink = linkFromFirstColumn || '';
-        let series = 1;
-        let repetitions = '10';
+        let series = 0;
+        let repetitions = '';
         let rest = '';
         let notes = '';
         
-        // Processar as colunas restantes de forma inteligente
-        for (let i = 1; i < parts.length; i++) {
-          const part = parts[i].trim();
-          
-          // Se for um link HTTP
+        // Processar colunas na ordem: Link (se não extraído), Séries, Repetições, Pausa, Observações
+        let colIndex = 1;
+        
+        // Coluna 1: Link do vídeo (se não foi extraído do nome)
+        if (colIndex < parts.length && !videoLink) {
+          const part = parts[colIndex].trim();
           if (part.startsWith('http')) {
-            if (!videoLink) videoLink = part;
-            continue;
+            videoLink = part;
+            colIndex++;
           }
-          
-          // Se for pausa (contém 's', 'min', 'seg' ou é um range de números)
-          if (part.match(/^\d+s$/i) || 
-              part.match(/^\d+\s*min/i) || 
-              part.match(/^\d+\s*seg/i) ||
-              part.match(/^\d+-\d+$/)) {
-            rest = part;
-            continue;
-          }
-          
-          // Se for apenas um número (provavelmente séries)
-          if (part.match(/^\d+$/) && !series) {
+        }
+        
+        // Coluna seguinte: Séries (apenas número)
+        if (colIndex < parts.length) {
+          const part = parts[colIndex].trim();
+          if (part.match(/^\d+$/)) {
             series = parseInt(part);
-            continue;
+            colIndex++;
           }
-          
-          // Se for repetições (número com traço, vírgula, ou "x")
-          if (part.match(/^\d+[-,x]\d+/) || part.match(/^\d+$/)) {
-            if (!repetitions || repetitions === '10') {
-              repetitions = part;
-              continue;
-            }
+        }
+        
+        // Coluna seguinte: Repetições (número ou range)
+        if (colIndex < parts.length) {
+          const part = parts[colIndex].trim();
+          if (part) {
+            repetitions = part;
+            colIndex++;
           }
-          
-          // Qualquer outra coisa é nota/observação
-          notes = notes ? `${notes} ${part}` : part;
+        }
+        
+        // Coluna seguinte: Pausa (com 's', 'min', 'seg')
+        if (colIndex < parts.length) {
+          const part = parts[colIndex].trim();
+          if (part) {
+            rest = part;
+            colIndex++;
+          }
+        }
+        
+        // Restante: Observações
+        if (colIndex < parts.length) {
+          notes = parts.slice(colIndex).filter(p => p.trim()).join(' ');
         }
         
         exercises.push({
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           name: exerciseNameClean,
-          series: series,
-          repetitions: repetitions,
-          rest: rest,
-          videoLink: videoLink,
-          notes: notes,
+          series: series || 0,
+          repetitions: repetitions || '',
+          rest: rest || '',
+          videoLink: videoLink || '',
+          notes: notes || '',
           category: category
         });
       }
