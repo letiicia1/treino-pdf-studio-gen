@@ -11,6 +11,7 @@ import { Plus, Upload, FileSpreadsheet } from "lucide-react";
 import { Exercise } from "@/types/workout";
 import BulkExerciseImport from "./BulkExerciseImport";
 import FileUploader from "./FileUploader";
+import ExerciseTableInput from "./ExerciseTableInput";
 import { separateExerciseNameAndLink } from "@/lib/utils";
 
 interface WorkoutFormProps {
@@ -87,7 +88,7 @@ const WorkoutForm = ({ onAddExercise, onAddMultipleExercises }: WorkoutFormProps
           </TabsList>
           
           <TabsContent value="bulk" className="mt-6">
-            <BulkExerciseImport onImportExercises={handleBulkImport} />
+            <ExerciseTableInput onImportExercises={handleBulkImport} />
           </TabsContent>
 
           <TabsContent value="single" className="mt-6">
