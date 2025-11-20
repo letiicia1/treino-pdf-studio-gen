@@ -50,6 +50,18 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text');
     
+    // Função auxiliar para limpar o texto da célula
+    const cleanCellText = (text: string): string => {
+      let cleaned = text.trim();
+      // Remover aspas duplas no início e fim (do Excel/Sheets)
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+        cleaned = cleaned.slice(1, -1);
+      }
+      // Remover quebras de linha e espaços extras internos
+      cleaned = cleaned.replace(/\n\s+/g, ' ').replace(/\s+/g, ' ').trim();
+      return cleaned;
+    };
+    
     // Detectar se é uma colagem de múltiplas células (tabs e quebras de linha)
     if (pastedData.includes('\t') || pastedData.includes('\n')) {
       const lines = pastedData.split('\n').filter(line => line.trim());
@@ -80,15 +92,17 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
         cells.forEach((cell, cellIndex) => {
           const targetField = fieldOrder[startFieldIndex + cellIndex];
           if (targetField && targetField !== 'id') {
+            const cleanedCell = cleanCellText(cell);
+            
             // Processar o nome do exercício para separar link se necessário
-            if (targetField === 'name' && cell.trim()) {
-              const { name, videoLink } = separateExerciseNameAndLink(cell.trim());
+            if (targetField === 'name' && cleanedCell) {
+              const { name, videoLink } = separateExerciseNameAndLink(cleanedCell);
               targetRow.name = name;
               if (videoLink && !targetRow.videoLink) {
                 targetRow.videoLink = videoLink;
               }
-            } else {
-              targetRow[targetField] = cell.trim();
+            } else if (cleanedCell) {
+              targetRow[targetField] = cleanedCell;
             }
           }
         });
@@ -97,7 +111,7 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
       setRows(newRows);
     } else {
       // Colagem simples em uma célula
-      handleCellChange(rows[rowIndex].id, field, pastedData);
+      handleCellChange(rows[rowIndex].id, field, cleanCellText(pastedData));
     }
   };
 
