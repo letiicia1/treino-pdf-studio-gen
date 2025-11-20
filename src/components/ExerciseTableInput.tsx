@@ -57,17 +57,68 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
       if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
         cleaned = cleaned.slice(1, -1);
       }
-      // Remover quebras de linha e espaços extras internos
-      cleaned = cleaned.replace(/\n\s+/g, ' ').replace(/\s+/g, ' ').trim();
+      // Substituir quebras de linha internas por espaço
+      cleaned = cleaned.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
       return cleaned;
     };
+
+    // Função para processar dados tabulares corretamente
+    const parseTabularData = (data: string): string[][] => {
+      const rows: string[][] = [];
+      let currentRow: string[] = [];
+      let currentCell = '';
+      let insideQuotes = false;
+      
+      for (let i = 0; i < data.length; i++) {
+        const char = data[i];
+        const nextChar = data[i + 1];
+        
+        if (char === '"') {
+          // Detectar aspas duplas escapadas ("")
+          if (nextChar === '"') {
+            currentCell += '"';
+            i++; // Pular a próxima aspa
+          } else {
+            insideQuotes = !insideQuotes;
+          }
+        } else if (char === '\t' && !insideQuotes) {
+          // Tab fora de aspas = nova célula
+          currentRow.push(cleanCellText(currentCell));
+          currentCell = '';
+        } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+          // Nova linha fora de aspas = nova linha da tabela
+          if (char === '\r' && nextChar === '\n') {
+            i++; // Pular o \n do \r\n
+          }
+          currentRow.push(cleanCellText(currentCell));
+          if (currentRow.some(cell => cell)) { // Só adicionar se tiver conteúdo
+            rows.push(currentRow);
+          }
+          currentRow = [];
+          currentCell = '';
+        } else {
+          // Adicionar caractere normal à célula atual
+          currentCell += char;
+        }
+      }
+      
+      // Adicionar última célula e linha se houver
+      if (currentCell || currentRow.length > 0) {
+        currentRow.push(cleanCellText(currentCell));
+        if (currentRow.some(cell => cell)) {
+          rows.push(currentRow);
+        }
+      }
+      
+      return rows;
+    };
     
-    // Detectar se é uma colagem de múltiplas células (tabs e quebras de linha)
+    // Detectar se é uma colagem de múltiplas células
     if (pastedData.includes('\t') || pastedData.includes('\n')) {
-      const lines = pastedData.split('\n').filter(line => line.trim());
+      const parsedRows = parseTabularData(pastedData);
       const newRows = [...rows];
       
-      lines.forEach((line, lineIndex) => {
+      parsedRows.forEach((cells, lineIndex) => {
         const targetRowIndex = rowIndex + lineIndex;
         if (targetRowIndex >= newRows.length) {
           // Adicionar nova linha se necessário
@@ -82,7 +133,6 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
           });
         }
         
-        const cells = line.split('\t');
         const targetRow = newRows[targetRowIndex];
         
         // Determinar a partir de qual coluna começar
@@ -91,18 +141,16 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
         
         cells.forEach((cell, cellIndex) => {
           const targetField = fieldOrder[startFieldIndex + cellIndex];
-          if (targetField && targetField !== 'id') {
-            const cleanedCell = cleanCellText(cell);
-            
+          if (targetField && targetField !== 'id' && cell) {
             // Processar o nome do exercício para separar link se necessário
-            if (targetField === 'name' && cleanedCell) {
-              const { name, videoLink } = separateExerciseNameAndLink(cleanedCell);
+            if (targetField === 'name') {
+              const { name, videoLink } = separateExerciseNameAndLink(cell);
               targetRow.name = name;
               if (videoLink && !targetRow.videoLink) {
                 targetRow.videoLink = videoLink;
               }
-            } else if (cleanedCell) {
-              targetRow[targetField] = cleanedCell;
+            } else {
+              targetRow[targetField] = cell;
             }
           }
         });
