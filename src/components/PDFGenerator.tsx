@@ -11,6 +11,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Exercise, BrandingConfig } from "@/types/workout";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PDFGeneratorProps {
   exercises: Exercise[];
@@ -102,21 +104,58 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
       XLSX.utils.book_append_sheet(workbook, worksheet, `Treino ${category}`);
     });
     
-    // Generate filename based on level, frequency and complement
+    // Generate filename based on level, sublevel, frequency and complement
     const levelText = level ? level.charAt(0).toUpperCase() + level.slice(1) : '';
+    const subLevelText = subLevel ? ` Nível ${subLevel}` : '';
     const frequencyText = `${weeklyFrequency}x`;
     const complementText = levelComplement ? `-${levelComplement}` : '';
-    const fileName = `${levelText}-${frequencyText}${complementText}.xlsx`;
+    const fileName = `${levelText}${subLevelText}-${frequencyText}${complementText}.xlsx`;
     
     // Save Excel file
     XLSX.writeFile(workbook, fileName);
   };
 
-  const generatePDF = () => {
+  const saveExercisesToDatabase = async () => {
+    try {
+      // TODO: Descomentar quando a tabela exercise_database for criada no Supabase
+      // Preparar dados dos exercícios para salvar
+      const exercisesToSave = exercises.map(exercise => ({
+        name: exercise.name,
+        video_link: exercise.videoLink || null,
+        series: exercise.series,
+        repetitions: exercise.repetitions,
+        rest: exercise.rest || null,
+        notes: exercise.notes || null,
+        category: exercise.category
+      }));
+
+      console.log('Exercícios prontos para salvar:', exercisesToSave);
+      toast.info('Base de dados será ativada quando o servidor Supabase estiver disponível');
+      
+      // Descomentar quando a tabela for criada:
+      // const { error } = await supabase
+      //   .from('exercise_database')
+      //   .insert(exercisesToSave);
+      // 
+      // if (error) {
+      //   console.error('Erro ao salvar exercícios:', error);
+      //   toast.error('Erro ao salvar exercícios na base de dados');
+      // } else {
+      //   toast.success(`${exercisesToSave.length} exercícios salvos na base de dados`);
+      // }
+    } catch (error) {
+      console.error('Erro ao salvar exercícios:', error);
+    }
+  };
+
+  const generatePDF = async () => {
     if (categoriesWithExercises.length === 0) {
       alert('Adicione exercícios aos treinos primeiro.');
       return;
     }
+
+    // Salvar exercícios na base de dados automaticamente
+    await saveExercisesToDatabase();
 
     const doc = new jsPDF();
     let isFirstPage = true;
