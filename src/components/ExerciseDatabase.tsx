@@ -255,7 +255,7 @@ const ExerciseDatabase = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar exercícios por nome ou grupo muscular..."
@@ -264,126 +264,167 @@ const ExerciseDatabase = () => {
               className="flex-1"
             />
           </div>
-          
-          {exercises.length === 0 && (
-            <Alert>
-              <Database className="h-4 w-4" />
-              <AlertDescription>
-                Nenhum exercício encontrado na base de dados. Adicione exercícios para começar.
-              </AlertDescription>
-            </Alert>
-          )}
         </CardContent>
       </Card>
 
-      {/* Exercise Grid */}
-      {filteredExercises.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredExercises.map((exercise) => (
-            <Card key={exercise.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
-                      {exercise.name}
-                    </h3>
-                    {exercise.muscle_group && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {exercise.muscle_group}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex gap-1">
-                    {exercise.video_url && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openVideoPlayer(exercise)}
-                        className="flex-1"
-                      >
-                        <Play className="h-3 w-3 mr-1" />
-                        Vídeo
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openEditModal(exercise)}
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" variant="outline">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir o exercício "{exercise.name}"? 
-                            Esta ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteExercise(exercise.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {filteredExercises.length === 0 && searchTerm && (
+      {exercises.length === 0 ? (
+        <Alert>
+          <Database className="h-4 w-4" />
+          <AlertDescription>
+            Nenhum exercício encontrado na base de dados. Adicione exercícios para começar.
+          </AlertDescription>
+        </Alert>
+      ) : filteredExercises.length === 0 ? (
         <Alert>
           <Search className="h-4 w-4" />
           <AlertDescription>
             Nenhum exercício encontrado para "{searchTerm}".
           </AlertDescription>
         </Alert>
-      )}
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Lista de Exercícios */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Lista de Exercícios</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[600px] pr-4">
+                <ol className="space-y-2">
+                  {filteredExercises.map((exercise, index) => (
+                    <li key={exercise.id}>
+                      <div
+                        className={`p-3 rounded-lg border transition-all cursor-pointer hover:shadow-md ${
+                          selectedExercise?.id === exercise.id
+                            ? 'bg-primary/10 border-primary'
+                            : 'bg-card hover:bg-muted/50'
+                        }`}
+                        onClick={() => setSelectedExercise(exercise)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="font-semibold text-muted-foreground min-w-[2rem]">
+                            {index + 1}.
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm mb-1">
+                              {exercise.name}
+                            </h3>
+                            {exercise.muscle_group && (
+                              <p className="text-xs text-muted-foreground">
+                                {exercise.muscle_group}
+                              </p>
+                            )}
+                            {exercise.video_url && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <Play className="h-3 w-3 text-primary" />
+                                <span className="text-xs text-primary">Vídeo disponível</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(exercise);
+                              }}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir o exercício "{exercise.name}"? 
+                                    Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteExercise(exercise.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </ScrollArea>
+            </CardContent>
+          </Card>
 
-      {/* Video Player Modal */}
-      <Dialog open={isVideoPlayerOpen} onOpenChange={setIsVideoPlayerOpen}>
-        <DialogContent className="sm:max-w-[800px] sm:max-h-[600px]">
-          <DialogHeader>
-            <DialogTitle>{selectedExercise?.name}</DialogTitle>
-          </DialogHeader>
-          {selectedExercise?.video_url && (
-            <div className="aspect-video">
-              <iframe
-                src={getVideoEmbedUrl(selectedExercise.video_url)}
-                title={selectedExercise.name}
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="rounded-lg"
-              />
-            </div>
-          )}
-          {selectedExercise?.muscle_group && (
-            <p className="text-sm text-muted-foreground">
-              <strong>Grupo Muscular:</strong> {selectedExercise.muscle_group}
-            </p>
-          )}
-        </DialogContent>
-      </Dialog>
+          {/* Preview de Vídeo */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Preview do Exercício</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedExercise ? (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">
+                      {selectedExercise.name}
+                    </h3>
+                    {selectedExercise.muscle_group && (
+                      <p className="text-sm text-muted-foreground">
+                        Grupo Muscular: {selectedExercise.muscle_group}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {selectedExercise.video_url ? (
+                    <div className="aspect-video rounded-lg overflow-hidden border">
+                      <iframe
+                        src={getVideoEmbedUrl(selectedExercise.video_url)}
+                        title={selectedExercise.name}
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-video rounded-lg border border-dashed flex items-center justify-center">
+                      <div className="text-center text-muted-foreground">
+                        <Play className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Nenhum vídeo disponível</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="h-[600px] flex items-center justify-center text-center">
+                  <div className="text-muted-foreground">
+                    <Database className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">
+                      Selecione um exercício da lista para ver os detalhes
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
