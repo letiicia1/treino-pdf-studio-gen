@@ -117,34 +117,29 @@ const PDFGenerator = ({ exercises, branding, weeklyFrequency = 3, onWeeklyFreque
 
   const saveExercisesToDatabase = async () => {
     try {
-      // TODO: Descomentar quando a tabela exercise_database for criada no Supabase
-      // Preparar dados dos exercícios para salvar
       const exercisesToSave = exercises.map(exercise => ({
         name: exercise.name,
         video_link: exercise.videoLink || null,
-        series: exercise.series,
+        series: String(exercise.series),
         repetitions: exercise.repetitions,
         rest: exercise.rest || null,
         notes: exercise.notes || null,
         category: exercise.category
       }));
 
-      console.log('Exercícios prontos para salvar:', exercisesToSave);
-      toast.info('Base de dados será ativada quando o servidor Supabase estiver disponível');
+      const { error } = await supabase
+        .from('exercises')
+        .insert(exercisesToSave);
       
-      // Descomentar quando a tabela for criada:
-      // const { error } = await supabase
-      //   .from('exercise_database')
-      //   .insert(exercisesToSave);
-      // 
-      // if (error) {
-      //   console.error('Erro ao salvar exercícios:', error);
-      //   toast.error('Erro ao salvar exercícios na base de dados');
-      // } else {
-      //   toast.success(`${exercisesToSave.length} exercícios salvos na base de dados`);
-      // }
+      if (error) {
+        console.error('Erro ao salvar exercícios:', error);
+        toast.error('Erro ao salvar exercícios na base de dados');
+      } else {
+        toast.success(`${exercisesToSave.length} exercícios salvos na base de dados`);
+      }
     } catch (error) {
       console.error('Erro ao salvar exercícios:', error);
+      toast.error('Erro ao salvar exercícios na base de dados');
     }
   };
 
