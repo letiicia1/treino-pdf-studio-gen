@@ -53,6 +53,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ready_workouts: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          level_category: string | null
+          level_complement: string | null
+          level_number: number | null
+          name: string
+          updated_at: string
+          weekly_frequency: number | null
+          workout_data: Json | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          level_category?: string | null
+          level_complement?: string | null
+          level_number?: number | null
+          name: string
+          updated_at?: string
+          weekly_frequency?: number | null
+          workout_data?: Json | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          level_category?: string | null
+          level_complement?: string | null
+          level_number?: number | null
+          name?: string
+          updated_at?: string
+          weekly_frequency?: number | null
+          workout_data?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
