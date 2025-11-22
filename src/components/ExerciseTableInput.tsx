@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, TableIcon, Download, FileSpreadsheet } from "lucide-react";
+import { Plus, Trash2, TableIcon, Download, FileSpreadsheet, Database } from "lucide-react";
 import { Exercise } from "@/types/workout";
 import { separateExerciseNameAndLink } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -279,6 +281,75 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
     doc.save(`Treino_${selectedCategory}_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
+  const saveExercisesToDatabase = async () => {
+    const filledRows = rows.filter(row => row.name.trim());
+    
+    if (filledRows.length === 0) {
+      toast.error('Nenhum exercício para salvar!');
+      return;
+    }
+
+    try {
+      const exercisesToSave = filledRows.map(row => ({
+        name: row.name.trim(),
+        video_link: row.videoLink.trim() || null,
+        series: row.series.trim() || null,
+        repetitions: row.repetitions.trim() || null,
+        rest: row.rest.trim() || null,
+        notes: row.notes.trim() || null,
+        category: selectedCategory
+      }));
+
+      const { error } = await supabase
+        .from('exercises')
+        .insert(exercisesToSave);
+
+      if (error) throw error;
+
+      toast.success(`${filledRows.length} exercícios salvos na base de dados!`);
+    } catch (error) {
+      console.error('Erro ao salvar exercícios:', error);
+      toast.error('Erro ao salvar exercícios na base de dados');
+    }
+  };
+
+  const exportDatabaseToExcel = async () => {
+    try {
+      const { data: exercises, error } = await supabase
+        .from('exercises')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!exercises || exercises.length === 0) {
+        toast.error('Nenhum exercício encontrado na base de dados!');
+        return;
+      }
+
+      const excelData = exercises.map((exercise, index) => ({
+        '#': index + 1,
+        'Exercício': exercise.name,
+        'Link do Vídeo': exercise.video_link || '',
+        'Categoria': exercise.category || '',
+        'Séries': exercise.series || '',
+        'Repetições': exercise.repetitions || '',
+        'Pausa': exercise.rest || '',
+        'Observações': exercise.notes || ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Exercícios');
+      
+      XLSX.writeFile(workbook, `Base_Exercicios_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success('Exercícios exportados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar exercícios:', error);
+      toast.error('Erro ao exportar exercícios da base de dados');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
@@ -414,7 +485,7 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
               className="bg-green-50 hover:bg-green-100"
             >
               <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Exportar para Excel
+              Exportar tabela para Excel
             </Button>
             <Button 
               onClick={exportToPDF} 
@@ -423,7 +494,27 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
               className="bg-red-50 hover:bg-red-100"
             >
               <Download className="h-4 w-4 mr-2" />
-              Exportar para PDF
+              Exportar tabela para PDF
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+            <Button 
+              onClick={saveExercisesToDatabase} 
+              variant="outline" 
+              disabled={filledRowsCount === 0}
+              className="bg-blue-50 hover:bg-blue-100"
+            >
+              <Database className="h-4 w-4 mr-2" />
+              Salvar na Base de Dados
+            </Button>
+            <Button 
+              onClick={exportDatabaseToExcel} 
+              variant="outline"
+              className="bg-purple-50 hover:bg-purple-100"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Base para Excel
             </Button>
           </div>
 
