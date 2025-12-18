@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logoAscendere from "@/assets/logo-ascendere.jpeg";
 
 interface ExerciseTableInputProps {
   onImportExercises: (exercises: Exercise[]) => void;
@@ -237,6 +238,16 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
     XLSX.writeFile(workbook, `Treino_${selectedCategory}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  const addHeaderToPage = (doc: jsPDF) => {
+    // Adicionar logo no canto superior esquerdo
+    doc.addImage(logoAscendere, 'JPEG', 10, 5, 25, 25);
+    
+    // Título centralizado
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ASCENDERE - ACADEMIA DE MUSCULAÇÃO', doc.internal.pageSize.getWidth() / 2, 18, { align: 'center' });
+  };
+
   const exportToPDF = () => {
     const filledRows = rows.filter(row => row.name.trim());
     
@@ -247,9 +258,13 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
 
     const doc = new jsPDF();
     
-    // Título
-    doc.setFontSize(18);
-    doc.text(`Treino ${selectedCategory}`, 14, 20);
+    // Adicionar header na primeira página
+    addHeaderToPage(doc);
+    
+    // Subtítulo do treino
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Treino ${selectedCategory}`, 14, 40);
     
     // Preparar dados para a tabela
     const tableData = filledRows.map((row, index) => [
@@ -263,11 +278,11 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
 
     // Gerar tabela
     autoTable(doc, {
-      startY: 30,
+      startY: 50,
       head: [['#', 'Exercício', 'Séries', 'Repetições', 'Pausa', 'Observações']],
       body: tableData,
       styles: { fontSize: 9 },
-      headStyles: { fillColor: [59, 130, 246] },
+      headStyles: { fillColor: [30, 30, 30] },
       columnStyles: {
         0: { cellWidth: 10 },
         1: { cellWidth: 60 },
@@ -275,10 +290,14 @@ const ExerciseTableInput = ({ onImportExercises }: ExerciseTableInputProps) => {
         3: { cellWidth: 25 },
         4: { cellWidth: 20 },
         5: { cellWidth: 50 }
+      },
+      didDrawPage: () => {
+        // Adicionar header em cada nova página
+        addHeaderToPage(doc);
       }
     });
 
-    doc.save(`Treino_${selectedCategory}_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`ASCENDERE_Treino_${selectedCategory}_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const saveExercisesToDatabase = async () => {
